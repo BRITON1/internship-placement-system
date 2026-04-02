@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - InternHub</title>
+    <style>
+        .role-box {
+            border: 2px solid #ccc;
+            padding: 15px;
+            display: inline-block;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .selected {
+            border-color: green;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Create your account</h2>
+
+<form method="POST" action="/register">
+    
+    <input type="text" name="full_name" placeholder="Full Name" required><br><br>
+    <input type="email" name="email" placeholder="Email" required><br><br>
+    <input type="password" name="password" placeholder="Password" required><br><br>
+
+    <!-- Hidden role -->
+    <input type="hidden" name="role" id="role">
+
+    <h3>Select Role</h3>
+
+    <div class="role-box" onclick="selectRole('student', this)">Student</div>
+    <div class="role-box" onclick="selectRole('organization', this)">Organization</div>
+    <div class="role-box" onclick="selectRole('supervisor', this)">Supervisor</div>
+    <div class="role-box" onclick="selectRole('admin', this)">Admin</div>
+
+    <br><br>
+    <button type="submit">Create Account</button>
+</form>
+
+<script>
+function selectRole(role, element) {
+    document.getElementById("role").value = role;
+
+    let boxes = document.querySelectorAll('.role-box');
+    boxes.forEach(box => box.classList.remove('selected'));
+
+    element.classList.add('selected');
+}
+</script>
+
+</body>
+</html>
