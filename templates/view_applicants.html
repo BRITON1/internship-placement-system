@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicants - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-nav a { text-decoration: none; display: flex; align-items: center; gap: 10px; padding: 12px 20px; color: #cbd5e1; transition: 0.3s; }
+        .sidebar-nav a.active { background: #334155; color: white; border-left: 4px solid #3b82f6; }
+        .application-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Organization</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/organization/dashboard"><i class="fa-solid fa-grid-view"></i> Dashboard</a>
+            <a href="/organization/post"><i class="fa-solid fa-briefcase"></i> Post Slots</a>
+            <a href="/organization/applicants" class="active"><i class="fa-solid fa-file-lines"></i> Applications</a>
+            <a href="/organization/interns"><i class="fa-solid fa-users"></i> Current Interns</a>
+            <a href="/organization/evaluations"><i class="fa-solid fa-star"></i> Evaluations</a>
+            <a href="/organization/profile"><i class="fa-solid fa-building"></i> Company Profile</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="{{ url_for('logout') }}">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #dcfce7; color: #166534;">{{ initial or 'T' }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 30px;">Student Applications</h2>
+
+            <div class="applications-list">
+                {% if applications %}
+                    {% for app in applications %}
+                    <div class="application-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">
+                                    Applied for: <span style="font-weight: 700; color: #1e293b; text-transform: uppercase;">{{ app.title }}</span>
+                                </p>
+                                <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">{{ app.full_name }}</h3>
+                                <p style="color: #94a3b8; font-size: 0.85rem; font-style: italic; margin: 5px 0 10px 0;">{{ app.email }}</p>
+                                <p style="color: #94a3b8; font-size: 0.8rem;">Applied: {{ app.date_applied or '09/04/2026' }}</p>
+                            </div>
+
+                            <div style="text-align: right;">
+                                <span class="status-pill" style="background: #f1f5f9; color: #475569; margin-bottom: 15px;">
+                                    {{ app.status|capitalize }}
+                                </span>
+                                
+                                <div style="display: flex; gap: 10px;">
+                                    <form action="/application/update" method="POST">
+                                        <input type="hidden" name="app_id" value="{{ app.id }}">
+                                        <button type="submit" name="status" value="accepted" 
+                                                style="background: #1e293b; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <form action="/application/update" method="POST">
+                                        <input type="hidden" name="app_id" value="{{ app.id }}">
+                                        <button type="submit" name="status" value="rejected" 
+                                                style="background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                            Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 60px; border: 2px dashed #e2e8f0; border-radius: 12px;">
+                        <i class="fa-solid fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                        <p style="color: #64748b;">No pending applications yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

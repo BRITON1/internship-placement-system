@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Internship Slots - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Organization</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/organization/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/organization/post" class="active"><i class="fa-solid fa-briefcase"></i> Post Slots</a>
+            <a href="/organization/applicants"><i class="fa-solid fa-file-invoice"></i> Applications</a>
+            </nav>
+        <div class="sign-out"><a href="/"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a></div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #d1fae5; color: #059669;">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2 style="color: #1e293b; font-weight: 600;">Internship Slots</h2>
+                <a href="/organization/new_slot" style="text-decoration: none;">
+                    <button class="save-btn" style="background: #1e293b; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-plus"></i> Post New Slot
+                    </button>
+                </a>
+            </div>
+
+            {% for slot in slots %}
+            <div class="app-card" style="margin-bottom: 15px; align-items: flex-start;">
+                <div class="app-info">
+                    <h3 style="color: #1e293b; margin-bottom: 5px;">{{ slot.title | upper }}</h3>
+                    <p class="app-meta">{{ slot.category }} • {{ slot.location }}</p>
+                    <p style="font-size: 13px; color: #64748b; margin: 8px 0;">{{ slot.description[:100] }}...</p>
+                    <p class="app-date">Slots: {{ slot.available_slots }} | Starts: {{ slot.start_date }}</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="status-badge pending" style="text-transform: lowercase;">{{ slot.status }}</span>
+                    <a href="/edit/{{ slot.id }}" style="color: #64748b;"><i class="fa-solid fa-pen"></i></a>
+                    <a href="/delete/{{ slot.id }}" style="color: #ef4444;"><i class="fa-solid fa-trash"></i></a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

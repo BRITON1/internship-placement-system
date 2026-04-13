@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Reports - InternHub Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Admin</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/allocations"><i class="fa-solid fa-user-check"></i> Allocations</a>
+            <a href="/admin/reports" class="active"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="/admin/audit-logs"><i class="fa-solid fa-file-shield"></i> Audit Logs</a>
+            <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+        <div class="sign-out">
+            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="color: #1e293b; margin-bottom: 25px;">System Reports</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Total Students</h4>
+                        <span>{{ students }}</span>
+                    </div>
+                    <i class="fa-solid fa-users-viewfinder icon-green" style="color: #10b981; opacity: 0.5;"></i>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Organizations</h4>
+                        <span>{{ orgs }}</span>
+                    </div>
+                    <i class="fa-solid fa-building icon-blue" style="color: #3b82f6; opacity: 0.5;"></i>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Internship Slots</h4>
+                        <span>{{ slots }}</span>
+                    </div>
+                    <i class="fa-solid fa-briefcase icon-teal" style="color: #0d9488; opacity: 0.5;"></i>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Placements</h4>
+                        <span>{{ placements }}</span>
+                    </div>
+                    <i class="fa-solid fa-circle-check icon-green" style="color: #10b981; opacity: 0.5;"></i>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">Recent System Activity</h3>
+                <div class="content-card" style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <p style="color: #64748b; font-size: 14px;">Real-time data synchronization is active.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

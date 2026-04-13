@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Student</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/student/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/internships"><i class="fa-solid fa-magnifying-glass"></i> Browse Opportunities</a>
+            <a href="/student/applications"><i class="fa-solid fa-file-lines"></i> My Applications</a>
+            <a href="/student/logbook"><i class="fa-solid fa-book"></i> Logbook</a>
+            <a href="/student/reports"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+            <a href="/student/profile" class="active"><i class="fa-solid fa-user"></i> Profile</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="/"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="margin-bottom: 25px; color: #1e293b; font-weight: 600;">My Profile</h2>
+
+            <div class="content-card" style="background: white; padding: 40px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <p style="text-transform: uppercase; font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; margin-bottom: 25px;">Personal Details</p>
+                
+                <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 35px;">
+                    <div class="user-avatar" style="width: 90px; height: 90px; font-size: 36px; background: #f1f5f9; color: #0d9488; border: 2px solid #f1f5f9;">
+                        {{ initial }}
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; color: #0f172a; font-size: 20px;">{{ user.full_name }}</h3>
+                        <p style="margin: 6px 0 0; color: #94a3b8; font-size: 14px;">Click the avatar to upload a new photo</p>
+                    </div>
+                </div>
+
+                <form action="/student/profile/update" method="POST">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 10px; font-size: 14px; font-weight: 500; color: #334155;">First Name</label>
+                            <input type="text" name="first_name" value="{{ first_name }}" class="form-input">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 10px; font-size: 14px; font-weight: 500; color: #334155;">Last Name</label>
+                            <input type="text" name="last_name" value="{{ last_name }}" class="form-input">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 35px;">
+                        <label style="display: block; margin-bottom: 10px; font-size: 14px; font-weight: 500; color: #334155;">Email</label>
+                        <input type="email" value="{{ user.email }}" class="form-input" readonly style="background-color: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #f1f5f9;">
+                    </div>
+
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

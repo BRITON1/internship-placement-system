@@ -1,0 +1,141 @@
+/* Master Styles - INTERNHUB */
+:root {
+    --primary-teal: #38b2ac;
+    --hover-teal: #319795;
+    --dark-navy: #0f172a;
+    --slate-gray: #64748b;
+    --bg-light: #f8fafc;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+/* Header & Logo */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 6%;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.logo-img { height: 50px; width: auto; } /* */
+
+nav a {
+    color: #475569;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Buttons */
+.get-started-btn {
+    background-color: var(--dark-navy);
+    padding: 10px 20px;
+    border-radius: 6px;
+    color: white !important;
+}
+
+.btn-green {
+    background-color: var(--primary-teal);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Sections */
+section {
+    padding: 80px 10%;
+    min-height: auto; /* Fits content naturally */
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #1e2a4a 0%, #2d5a5e 50%, #1a936f 100%);
+    color: white;
+    text-align: center;
+    padding: 120px 10%;
+}
+
+.hero-section h1 { font-size: 42px; margin: 15px 0; font-weight: 800; }
+.hero-section p { font-size: 17px; max-width: 700px; margin: 0 auto 30px; opacity: 0.9; }
+
+/* Features & Roles Grid */
+.section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--dark-navy);
+    margin-bottom: 40px;
+    position: relative;
+    padding-left: 15px;
+    border-left: 4px solid var(--primary-teal);
+}
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+/* Card Styling */
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: 0.3s;
+}
+
+.card h3 { font-size: 18px; margin-bottom: 10px; color: var(--dark-navy); }
+.card p { font-size: 14px; color: var(--slate-gray); }
+
+/* Stats Bar */
+.stats-bar {
+    background-color: var(--dark-navy);
+    display: flex;
+    justify-content: space-around;
+    padding: 50px 0;
+    color: white;
+}
+.stat h3 { color: var(--primary-teal); font-size: 28px; margin: 0; }
+.stat p { font-size: 13px; opacity: 0.7; }
+
+/* Custom details for the combined index */
+.icon-teal { color: var(--primary-teal); font-size: 24px; margin-bottom: 15px; display: block; }
+
+.icon-circle {
+    background: #e6fffa;
+    width: 45px; height: 45px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary-teal);
+    margin-bottom: 20px;
+}
+
+.role-list { list-style: none; padding: 0; margin-top: 15px; }
+.role-list li { 
+    font-size: 13px; color: #475569; margin-bottom: 8px; 
+    padding-left: 18px; position: relative;
+}
+.role-list li::before {
+    content: "•"; color: var(--primary-teal); position: absolute; left: 0; font-weight: bold;
+}
+
+.step { display: flex; gap: 25px; margin-bottom: 35px; align-items: flex-start; }
+.step-num {
+    background: #e6fffa; color: var(--primary-teal);
+    min-width: 45px; height: 45px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 16px;
+}
+.step h4 { margin: 0 0 5px 0; color: var(--dark-navy); font-size: 18px; }
+.step p { margin: 0; font-size: 15px; color: #64748b; }

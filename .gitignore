@@ -1,0 +1,14 @@
+# Flask/Python temporary files
+__pycache__/
+*.pyc
+instance/
+.pytest_cache/
+
+# Environment files
+venv/
+env/
+.env
+
+# OS specific files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluate Intern - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .form-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+        .score-display {
+            background: #eff6ff;
+            color: #3b82f6;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            min-width: 35px;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content" style="margin-left: 0; padding: 40px;"> <div class="form-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                <div>
+                    <h2 style="margin: 0; color: #1e293b;">Performance Review</h2>
+                    <p style="color: #64748b; margin-top: 5px;">Student: <span style="color: #3b82f6; font-weight: 700;">{{ student.full_name }}</span></p>
+                </div>
+                <a href="/organization/evaluations" style="color: #64748b; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-xmark"></i> Cancel</a>
+            </div>
+
+            <form action="/submit_evaluation" method="POST">
+                <input type="hidden" name="app_id" value="{{ app_id }}">
+
+                <div class="form-group">
+                    <label>Work Ethic & Professionalism</label>
+                    <div class="slider-container">
+                        <input type="range" name="ethic" min="1" max="10" value="5" oninput="this.nextElementSibling.innerText = this.value">
+                        <span class="score-display">5</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Technical Competence & Skill Mastery</label>
+                    <div class="slider-container">
+                        <input type="range" name="technical" min="1" max="10" value="5" oninput="this.nextElementSibling.innerText = this.value">
+                        <span class="score-display">5</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Communication & Teamwork</label>
+                    <div class="slider-container">
+                        <input type="range" name="communication" min="1" max="10" value="5" oninput="this.nextElementSibling.innerText = this.value">
+                        <span class="score-display">5</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Final Remarks / Key Achievements</label>
+                    <textarea name="remarks" rows="5" placeholder="Describe the intern's performance and areas for improvement..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Recommendation for Future Employment?</label>
+                    <select name="recommend" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <option value="highly">Highly Recommend</option>
+                        <option value="yes">Recommend</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="no">Do Not Recommend</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-entry" style="width: 100%; justify-content: center; padding: 15px; font-weight: 700;">
+                    Submit Evaluation & Close Internship
+                </button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

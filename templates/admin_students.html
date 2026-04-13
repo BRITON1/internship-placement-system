@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Records - InternHub Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .search-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .student-table th {
+            text-align: left;
+            padding: 15px;
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .student-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-size: 14px;
+        }
+        .student-table tr:hover {
+            background-color: #f8fafc;
+        }
+        .id-badge {
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Admin</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students" class="active"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="color: #1e293b; margin-bottom: 20px;">Student Records</h2>
+
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="studentSearch" class="search-input" placeholder="Search students by name or email...">
+            </div>
+
+            <div class="content-card" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+                <table class="student-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Email Address</th>
+                            <th style="text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        {% if students %}
+                            {% for student in students %}
+                            <tr>
+                                <td><span class="id-badge">#{{ student.id }}</span></td>
+                                <td style="font-weight: 500;">{{ student.full_name }}</td>
+                                <td style="color: #64748b;">{{ student.email }}</td>
+                                <td style="text-align: center;">
+                                    <a href="/admin/view-student/{{ student.id }}" style="color: #3b82f6; text-decoration: none;"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 50px; color: #94a3b8;">
+                                    No students found.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('studentSearch').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let rows = document.querySelectorAll('#studentTableBody tr');
+            
+            rows.forEach(row => {
+                let text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
+
+</body>
+</html>

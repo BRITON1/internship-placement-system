@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Evaluations - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .eval-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table-custom th {
+            text-align: left;
+            padding: 12px 15px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table-custom td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+            font-size: 0.95rem;
+        }
+        .status-pill-pending {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Organization</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/organization/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/organization/post_slots"><i class="fa-solid fa-plus"></i> Post Slots</a>
+            <a href="/organization/applicants"><i class="fa-solid fa-file-invoice"></i> Applications</a>
+            <a href="/organization/interns"><i class="fa-solid fa-users"></i> Current Interns</a>
+            <a href="/organization/evaluations" class="active"><i class="fa-solid fa-star"></i> Evaluations</a>
+            <a href="/organization/profile"><i class="fa-solid fa-building"></i> Company Profile</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #e0f2fe; color: #0369a1;">T</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 10px;">Student Evaluations</h2>
+            <p style="color: #64748b; margin-bottom: 25px;">Provide performance feedback for your active interns.</p>
+
+            <div class="eval-container">
+                {% if interns %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Intern Name</th>
+                            <th>Position</th>
+                            <th>Evaluation Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intern in interns %}
+                        <tr>
+                            <td><strong>{{ intern.full_name }}</strong></td>
+                            <td>{{ intern.title }}</td>
+                            <td><span class="status-pill-pending">Awaiting Review</span></td>
+                            <td>
+                                <a href="/organization/evaluate/{{ intern.app_id }}" class="btn-entry" style="text-decoration: none; font-size: 0.8rem; background: #3b82f6;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Evaluate Now
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 50px;">
+                    <i class="fa-solid fa-clipboard-check" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                    <p style="color: #64748b;">No active interns found to evaluate.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

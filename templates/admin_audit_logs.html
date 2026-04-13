@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Logs - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo" style="height: 32px; filter: brightness(0) invert(1);">
+            <span style="font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); border-left: 1px solid rgba(255,255,255,0.3); padding-left: 8px; margin-left: 8px; line-height: 1;">Admin</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/allocations"><i class="fa-solid fa-user-check"></i> Allocations</a>
+            <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="/admin/audit-logs" class="active"><i class="fa-solid fa-file-shield"></i> Audit Logs</a>
+            <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="/" style="color: var(--text-muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="admin-banner">
+                <h1>Audit Logs 📋</h1>
+                <p>Track all system activities and user actions.</p>
+            </div>
+
+            <div class="content-card">
+                <div class="table-header">
+                    <h3>System Activity Log</h3>
+                </div>
+
+                {% if logs %}
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Action Taken</th>
+                                <th>User Responsible</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td style="color: #64748b;">{{ log.created_at }}</td>
+                                <td><span class="badge">{{ log.action }}</span></td>
+                                <td style="font-weight: 500; color: #1e293b;">{{ log.user_email }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div style="text-align: center; padding: 60px; color: #94a3b8;">
+                        <i class="fa-solid fa-folder-open" style="font-size: 48px; margin-bottom: 15px; opacity: 0.2;"></i>
+                        <p>No activity logs found yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

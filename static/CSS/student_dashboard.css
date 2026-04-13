@@ -1,0 +1,234 @@
+:root {
+    --sidebar-bg: #1e293b;
+    --primary-teal: #2dd4bf;
+    --text-muted: #94a3b8;
+    --bg-light: #f8fafc;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    background-color: var(--bg-light);
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    height: 100vh;
+    color: white;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+}
+
+.sidebar-logo img { height: 30px; }
+
+.sidebar-nav {
+    flex-grow: 1;
+    padding: 20px 0;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: var(--text-muted);
+    text-decoration: none;
+    gap: 15px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.sidebar-nav a:hover, .sidebar-nav a.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-left: 4px solid var(--primary-teal);
+}
+
+.sign-out {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sign-out a {
+    color: var(--text-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+}
+
+.top-nav {
+    height: 60px;
+    background: white;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 40px;
+}
+
+.user-avatar {
+    width: 35px;
+    height: 35px;
+    background: #ccfbf1;
+    color: #0d9488;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.dashboard-container { padding: 40px; }
+
+/* Banner */
+.student-banner {
+    background: linear-gradient(rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.8)), url('../images/banner-student.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 40px;
+    border-radius: 12px;
+    color: white;
+    margin-bottom: 30px;
+}
+
+/* Stat Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-info h4 { margin: 0; color: #64748b; font-size: 13px; }
+.stat-info span { font-size: 24px; font-weight: bold; color: #1e293b; }
+
+.icon-blue { color: #3b82f6; }
+.icon-orange { color: #f59e0b; }
+.icon-green { color: #10b981; }
+.icon-red { color: #ef4444; }
+
+
+/* Profile Form Styles */
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    outline: none;
+    transition: 0.2s;
+}
+
+.form-input:focus {
+    border-color: #2dd4bf;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+}
+
+.save-btn {
+    background-color: #1e293b;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #334155;
+}
+
+
+/* Application List Styling */
+.applications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.app-card {
+    background: white;
+    padding: 20px 25px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.app-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.app-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+    letter-spacing: 0.5px;
+}
+
+.app-meta {
+    margin: 5px 0;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.app-date {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.status-badge.accepted {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}

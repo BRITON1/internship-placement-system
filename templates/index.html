@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>InternHub - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="InternHub">
+        <nav>
+            <a href="#">Home</a>
+            <a href="#features">Features</a>
+            <a href="#user-roles">User Roles</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="/login">Sign In</a>
+            <a href="/register" class="get-started-btn">Get Started</a>
+        </nav>
+    </header>
+
+    <section class="hero-section" id="home">
+        <span style="background: rgba(255,255,255,0.1); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;">
+            <i class="fa-regular fa-circle-check"></i> University Internship Management
+        </span>
+        <h1>Internship & Industrial<br>Attachment Placement System</h1>
+        <p>A comprehensive platform connecting students, organizations, university coordinators, and supervisors for seamless internship placement and management.</p>
+        <div style="margin-top: 20px;">
+            <a href="/register" class="btn btn-green">Get Started →</a>
+            <a href="/login" class="btn-outline-white" style="margin-left: 15px; text-decoration: none; font-weight: 600; color: white; border: 1px solid rgba(255,255,255,0.4); padding: 12px 28px; border-radius: 8px;">Sign In</a>
+        </div>
+    </section>
+
+    <section id="features" style="background: white; border-bottom: 1px solid #f1f5f9;">
+        <h2 class="section-title">Powerful Features</h2>
+        <p style="color: #64748b; margin-bottom: 50px;">Everything you need to manage industrial attachments from application to completion.</p>
+        
+        <div class="grid-3">
+            <div class="card">
+                <i class="fa fa-search icon-teal"></i>
+                <h3>Smart Matching</h3>
+                <p>Intelligent placement allocation based on skills, preferences and availability.</p>
+            </div>
+            <div class="card">
+                <i class="fa fa-file-lines icon-teal"></i>
+                <h3>Digital Logbooks</h3>
+                <p>Students submit daily logs and weekly reports digitally for supervisor review.</p>
+            </div>
+            <div class="card">
+                <i class="fa fa-chart-simple icon-teal"></i>
+                <h3>Analytics & Reports</h3>
+                <p>Generate comprehensive reports by course, year, and organization.</p>
+            </div>
+            <div class="card">
+                <i class="fa fa-users icon-teal"></i>
+                <h3>Multi-Role Access</h3>
+                <p>Dedicated dashboards for students, companies, admins, and supervisors.</p>
+            </div>
+            <div class="card">
+                <i class="fa fa-paper-plane icon-teal"></i>
+                <h3>Online Applications</h3>
+                <p>Streamlined application process with status tracking at every step.</p>
+            </div>
+            <div class="card">
+                <i class="fa fa-clipboard-check icon-teal"></i>
+                <h3>Assessment & Grading</h3>
+                <p>Supervisors submit structured assessments and grades online.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="user-roles" style="background-color: #f8fafc;">
+        <h2 class="section-title">Built for Everyone</h2>
+        <p style="color: #64748b; margin-bottom: 50px;">Dedicated experiences for each user role in the placement ecosystem.</p>
+        
+        <div class="grid-4">
+            <div class="card role-card">
+                <div class="icon-circle"><i class="fa fa-graduation-cap"></i></div>
+                <h3>Students</h3>
+                <p>Find and apply for internship placements seamlessly.</p>
+                <ul class="role-list">
+                    <li>Create & manage profiles</li>
+                    <li>Browse opportunities</li>
+                    <li>Apply online</li>
+                    <li>Submit logbooks & reports</li>
+                </ul>
+            </div>
+            <div class="card role-card">
+                <div class="icon-circle"><i class="fa fa-building"></i></div>
+                <h3>Organizations</h3>
+                <p>Post slots and manage student interns efficiently.</p>
+                <ul class="role-list">
+                    <li>Register & verify details</li>
+                    <li>Post internship slots</li>
+                    <li>Review applications</li>
+                    <li>Evaluate performance</li>
+                </ul>
+            </div>
+            <div class="card role-card">
+                <div class="icon-circle"><i class="fa fa-shield-halved"></i></div>
+                <h3>University Admin</h3>
+                <p>Oversee the entire placement lifecycle.</p>
+                <ul class="role-list">
+                    <li>Manage student records</li>
+                    <li>Approve organizations</li>
+                    <li>Allocate students</li>
+                    <li>Generate reports</li>
+                </ul>
+            </div>
+            <div class="card role-card">
+                <div class="icon-circle"><i class="fa fa-book-open"></i></div>
+                <h3>Supervisors</h3>
+                <p>Guide and assess student interns remotely.</p>
+                <ul class="role-list">
+                    <li>View assigned students</li>
+                    <li>Review logbooks</li>
+                    <li>Submit assessments</li>
+                    <li>Grade performance</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" style="background: white;">
+        <h2 class="section-title">How It Works</h2>
+        <div style="max-width: 700px; margin-top: 40px;">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div><h4>Register & Create Profile</h4><p>Students and companies register on the platform and complete their profiles.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div><h4>Browse & Apply</h4><p>Students browse verified opportunities and submit applications online.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div><h4>Review & Allocate</h4><p>University coordinators review applications and allocate placements.</p></div>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <div><h4>Track & Assess</h4><p>Supervisors monitor progress, review logbooks, and submit grades.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <div style="background: linear-gradient(135deg, #1e2a4a 0%, #1a936f 100%); padding: 80px 10%; text-align: center; color: white;">
+        <h2 style="font-size: 32px; margin-bottom: 15px;">Ready to streamline your placements?</h2>
+        <p style="opacity: 0.8; margin-bottom: 30px;">Join universities and organizations already using InternHub.</p>
+        <a href="/register" class="btn btn-green">Create Your Account &rarr;</a>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat"><h3>500+</h3><p>Students Placed</p></div>
+        <div class="stat"><h3>120+</h3><p>Partner Companies</p></div>
+        <div class="stat"><h3>50+</h3><p>Courses Covered</p></div>
+        <div class="stat"><h3>98%</h3><p>Satisfaction Rate</p></div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Organizations - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover { background-color: #e2e8f0; }
+        .verify-btn {
+            background-color: #1e293b;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Admin</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations" class="active"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2 style="color: #1e293b;">Organizations</h2>
+                <a href="/admin/dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+            </div>
+
+            {% if organizations %}
+                {% for org in organizations %}
+                <div class="content-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="text-transform: uppercase; margin-bottom: 5px; color: #1e293b;">{{ org.full_name }}</h3>
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 3px;">
+                            <span style="text-transform: uppercase;">{{ org.industry or 'Industry' }}</span> • {{ org.location or 'Location' }}
+                        </p>
+                        <p style="color: #94a3b8; font-size: 13px;">{{ org.email }}</p>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="status-badge">{{ org.verification_status or 'Pending' }}</span>
+                        {% if org.verification_status != 'Verified' %}
+                        <form action="/admin/verify-org/{{ org.id }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="verify-btn">Verify</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="content-card" style="text-align: center; padding: 50px;">
+                    <p style="color: #64748b;">No organizations found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

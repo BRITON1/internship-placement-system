@@ -1,2 +1,320 @@
-<h2>Student Dashboard 🎓</h2>
-<p>Welcome Student! You can apply for internships here.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Smooth UI Transitions */
+        html { scroll-behavior: smooth; }
+        .log-section { margin-top: 30px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .table-custom th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 0.85rem; text-transform: uppercase; }
+        .table-custom td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        
+        /* Status Pill Colors */
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        .status-pending { background: #fef9c3; color: #854d0e; }
+        .status-accepted { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-revision { background: #fee2e2; color: #991b1b; }
+
+        .btn-entry { background: #1e293b; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; }
+        .btn-entry:hover { background: #334155; transform: translateY(-1px); }
+        
+        .sidebar-nav a { text-decoration: none; display: flex; align-items: center; gap: 10px; padding: 12px 20px; color: #cbd5e1; transition: 0.3s; }
+        .sidebar-nav a.active { background: #334155; color: white; border-left: 4px solid #3b82f6; }
+
+        /* Opportunity Card Styling */
+        .opportunity-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; transition: 0.3s; position: relative; overflow: hidden; }
+        .opportunity-card:hover { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .search-box { width: 100%; padding: 12px 12px 12px 45px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.95rem; outline: none; transition: 0.3s; }
+        .search-box:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Student</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('student_dashboard') }}" class="{{ 'active' if request.endpoint == 'student_dashboard' }}">
+                <i class="fa-solid fa-table-columns"></i> Dashboard
+            </a>
+            
+            <a href="/internships" class="{{ 'active' if request.path == '/internships' or request.endpoint == 'view_internship' }}">
+                <i class="fa-solid fa-magnifying-glass"></i> Browse Opportunities
+            </a>
+            
+            <a href="{{ url_for('student_applications') }}" class="{{ 'active' if request.endpoint == 'student_applications' }}">
+                <i class="fa-solid fa-file-lines"></i> My Applications
+            </a>
+            
+            <a href="{{ url_for('view_logbook') }}" class="{{ 'active' if request.endpoint == 'view_logbook' }}">
+                <i class="fa-solid fa-book"></i> Logbook
+            </a>
+            
+            <a href="{{ url_for('student_reports') }}" class="{{ 'active' if request.endpoint == 'student_reports' }}">
+                <i class="fa-solid fa-chart-bar"></i> Reports
+            </a>
+
+            <a href="{{ url_for('student_profile') }}" class="{{ 'active' if request.endpoint == 'student_profile' }}">
+                <i class="fa-solid fa-user"></i> Profile
+            </a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="{{ url_for('logout') }}">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            
+            {% if request.endpoint == 'student_dashboard' %}
+            <div class="student-banner">
+                <h1>Student Dashboard</h1>
+                <p>Welcome back! Here's your placement overview.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Applications Sent</h4>
+                        <span>{{ app_count }}</span>
+                    </div>
+                    <i class="fa-solid fa-briefcase icon-blue"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Pending Review</h4>
+                        <span>{{ pending_count or 0 }}</span>
+                    </div>
+                    <i class="fa-solid fa-clock icon-orange"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Accepted</h4>
+                        <span>{{ accepted_count or 0 }}</span>
+                    </div>
+                    <i class="fa-solid fa-circle-check icon-green"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h4>Rejected</h4>
+                        <span>{{ rejected_count or 0 }}</span>
+                    </div>
+                    <i class="fa-solid fa-circle-xmark icon-red"></i>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if request.endpoint == 'view_internship' or request.path == '/internships' %}
+            <div class="browse-section" style="margin-top: 20px;">
+                <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 25px;">Browse Opportunities</h2>
+                
+                <div style="position: relative; margin-bottom: 30px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 15px; color: #94a3b8;"></i>
+                    <input type="text" class="search-box" placeholder="Search by title, location, or department...">
+                </div>
+
+                {% if internships %}
+                    {% for internship in internships %}
+                    <div class="opportunity-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h3 style="text-transform: uppercase; font-weight: 800; color: #1e293b; margin: 0 0 5px 0;">{{ internship.title }}</h3>
+                                <p style="color: #64748b; margin-bottom: 15px;">{{ internship.company_name }}</p>
+                            </div>
+                            <span class="status-pill" style="background: #1e293b; color: white;">Open</span>
+                        </div>
+
+                        <div style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">
+                            <span><i class="fa-solid fa-location-dot"></i> {{ internship.location }}</span>
+                            <span><i class="fa-solid fa-clock"></i> {{ internship.duration or '4 months' }}</span>
+                            <span><i class="fa-solid fa-users"></i> {{ internship.slots or '12' }} slot(s)</span>
+                        </div>
+
+                        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 20px;">
+                            <strong style="color: #1e293b;">Requirements:</strong> {{ internship.description }}
+                        </p>
+
+                        <form action="/apply" method="POST">
+                            <input type="hidden" name="internship_id" value="{{ internship.id }}">
+                            <button type="submit" class="btn-entry">Apply Now</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 60px; border: 2px dashed #e2e8f0; border-radius: 12px;">
+                        <i class="fa-solid fa-search" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px;"></i>
+                        <p style="color: #64748b;">No internships available right now.</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if request.endpoint == 'student_applications' %}
+            <div class="browse-section" style="margin-top: 20px;">
+                <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 25px;">My Applications</h2>
+                
+                {% if applications %}
+                    {% for app in applications %}
+                    <div class="opportunity-card" style="border-left: 5px solid 
+                        {% if app.status == 'accepted' %}#22c55e
+                        {% elif app.status == 'rejected' %}#ef4444
+                        {% else %}#f59e0b{% endif %};">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h3 style="text-transform: uppercase; font-weight: 800; color: #1e293b; margin: 0 0 5px 0;">
+                                    {{ app.title }}
+                                </h3>
+                                <p style="color: #64748b; margin-bottom: 10px;">{{ app.company_name }}</p>
+                                
+                                <div style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.85rem;">
+                                    <span><i class="fa-solid fa-calendar-day"></i> Applied on: {{ app.date_applied or '09/04/2026' }}</span>
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ app.location }}</span>
+                                </div>
+                            </div>
+
+                            <span class="status-pill 
+                                {% if app.status == 'accepted' %}status-accepted
+                                {% elif app.status == 'rejected' %}status-rejected
+                                {% else %}status-pending{% endif %}">
+                                {{ app.status|capitalize }}
+                            </span>
+                        </div>
+
+                        {% if app.status == 'accepted' %}
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9;">
+                            <p style="color: #166534; font-size: 0.85rem; font-weight: 600;">
+                                <i class="fa-solid fa-circle-check"></i> You have been accepted! The organization will contact you shortly.
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 60px; border: 2px dashed #e2e8f0; border-radius: 12px;">
+                        <i class="fa-solid fa-paper-plane" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                        <p style="color: #64748b;">No applications submitted yet.</p>
+                        <a href="/internships" class="btn-entry" style="margin-top: 15px;">Find Internships</a>
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if request.endpoint == 'view_logbook' %}
+            <div class="log-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 style="margin: 0; font-weight: 700;">Daily Logbook Activity</h3>
+                    <a href="{{ url_for('submit_logbook') }}" class="btn-entry">
+                        <i class="fa-solid fa-plus"></i> New Entry
+                    </a>
+                </div>
+
+                {% if logs %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Week</th>
+                            <th>Status</th>
+                            <th>Supervisor Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td><strong>{{ log.activity_date }}</strong></td>
+                            <td>Week {{ log.week_number }}</td>
+                            <td>
+                                <span class="status-pill 
+                                    {% if log.status == 'approved' %}status-approved
+                                    {% elif log.status == 'pending' %}status-pending
+                                    {% else %}status-revision{% endif %}">
+                                    {{ log.status|capitalize }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                <em>{{ log.supervisor_comment or 'Awaiting review...' }}</em>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 60px 20px; border: 2px dashed #e2e8f0; border-radius: 12px;">
+                    <i class="fa-solid fa-book-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                    <h4 style="color: #64748b;">No logbook entries yet</h4>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if request.endpoint == 'student_reports' %}
+            <div class="log-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 style="margin: 0; font-weight: 700;">My Reports</h3>
+                    <a href="{{ url_for('submit_report') }}" class="btn-entry">
+                        <i class="fa-solid fa-plus"></i> New Report
+                    </a>
+                </div>
+
+                {% if reports %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Report Title</th>
+                            <th>Date Submitted</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td><strong>{{ report.title }}</strong></td>
+                            <td>{{ report.date }}</td>
+                            <td>
+                                <span class="status-pill 
+                                    {% if report.status == 'approved' %}status-approved
+                                    {% elif report.status == 'pending' %}status-pending
+                                    {% else %}status-revision{% endif %}">
+                                    {{ report.status|capitalize }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                <em>{{ report.feedback or 'No feedback yet' }}</em>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 60px 20px; border: 2px dashed #e2e8f0; border-radius: 12px;">
+                    <i class="fa-solid fa-file-invoice" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                    <h4 style="color: #64748b;">No reports submitted yet</h4>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+
+</body>
+</html>

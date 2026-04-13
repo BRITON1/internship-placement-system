@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Post New Internship Slot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <style>
+        .form-container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+    </style>
+</head>
+<body style="background: #f1f5f9;">
+
+    <div class="form-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #1e293b;">Post New Internship Slot</h3>
+            <a href="/organization/post" style="color: #94a3b8; text-decoration: none;"><i class="fa-solid fa-xmark"></i></a>
+        </div>
+
+        <form action="/organization/post" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Title *</label>
+                <input type="text" name="title" class="form-input" placeholder="e.g. Software Engineering Intern" required>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Description</label>
+                <textarea name="description" class="form-input" style="height: 80px;" placeholder="Describe the role..."></textarea>
+            </div>
+
+            <div class="grid-row">
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Department</label>
+                    <input type="text" name="category" class="form-input">
+                </div>
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Location</label>
+                    <input type="text" name="location" class="form-input">
+                </div>
+            </div>
+
+            <div class="grid-row">
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Available Slots</label>
+                    <input type="number" name="available_slots" class="form-input" value="1">
+                </div>
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Duration</label>
+                    <input type="text" name="duration" class="form-input" placeholder="e.g. 3 months">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Requirements</label>
+                <textarea name="requirements" class="form-input" style="height: 80px;" placeholder="Skills, qualifications..."></textarea>
+            </div>
+
+            <div class="grid-row">
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Start Date</label>
+                    <input type="date" name="start_date" class="form-input">
+                </div>
+                <div>
+                    <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">End Date</label>
+                    <input type="date" name="end_date" class="form-input">
+                </div>
+            </div>
+
+            <button type="submit" class="save-btn" style="width: 100%; margin-top: 10px;">Post Slot</button>
+        </form>
+    </div>
+
+</body>
+</html>

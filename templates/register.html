@@ -1,54 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Register - InternHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
+        /* Base Reset */
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; min-height: 70vh; overflow: auto; }
+
+        /* Left Side: Dark Gradient */
+        .split-left {
+            flex: 1;
+            background: linear-gradient(135deg, #1e2a4a 0%, #2d5a5e 50%, #1a936f 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+
+        .split-left p {
+            color: #cbd5e0;
+            max-width: 320px;
+            margin-top: 25px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* Right Side: Registration Form */
+        .split-right {
+            flex: 1;
+            background-color: white;
+            padding: 60px 8%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        h2 { font-size: 28px; color: #0f172a; margin-bottom: 8px; }
+        .subtitle { color: #64748b; margin-bottom: 30px; font-size: 14px; }
+
+        /* Role Selection (2x2 Grid) */
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
         .role-box {
-            border: 2px solid #ccc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
             padding: 15px;
-            display: inline-block;
-            margin: 10px;
             cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 0.2s ease;
         }
-        .selected {
-            border-color: green;
+
+        .role-box i { color: #94a3b8; font-size: 18px; margin-top: 3px; }
+        .role-box h4 { margin: 0 0 4px 0; color: #1e293b; font-size: 14px; }
+        .role-box p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.3; }
+
+        /* Hover & Selected States */
+        .role-box:hover { border-color: #38b2ac; background-color: #f0fff4; }
+        .role-box.selected { border-color: #38b2ac; background-color: #e6fffa; }
+        .role-box.selected i { color: #38b2ac; }
+
+        /* Form Inputs */
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; color: #1e293b; font-size: 14px; font-weight: 600; }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            color: #1e293b;
+            box-sizing: border-box;
         }
+
+        .password-wrapper { position: relative; }
+        .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; cursor: pointer; }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background-color: #1e293b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .form-footer a { color: #38b2ac; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<h2>Create your account</h2>
+    <div class="split-left">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub" height="50">
+        <p>Register to access the internship placement system tailored for your role.</p>
+    </div>
 
-<form method="POST" action="/register">
-    
-    <input type="text" name="full_name" placeholder="Full Name" required><br><br>
-    <input type="email" name="email" placeholder="Email" required><br><br>
-    <input type="password" name="password" placeholder="Password" required><br><br>
+    <div class="split-right">
+        <h2>Create your account</h2>
+        <p class="subtitle">Choose your role and fill in your details.</p>
 
-    <!-- Hidden role -->
-    <input type="hidden" name="role" id="role">
+        <form method="POST" action="/register">
+            <input type="hidden" name="role" id="role" value="student">
 
-    <h3>Select Role</h3>
+            <div class="role-grid">
+                <div class="role-box selected" onclick="selectRole('student', this)">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <div>
+                        <h4>Student</h4>
+                        <p>Find & apply for placements</p>
+                    </div>
+                </div>
 
-    <div class="role-box" onclick="selectRole('student', this)">Student</div>
-    <div class="role-box" onclick="selectRole('organization', this)">Organization</div>
-    <div class="role-box" onclick="selectRole('supervisor', this)">Supervisor</div>
-    <div class="role-box" onclick="selectRole('admin', this)">Admin</div>
+                <div class="role-box" onclick="selectRole('organization', this)">
+                    <i class="fa-solid fa-building"></i>
+                    <div>
+                        <h4>Organization</h4>
+                        <p>Post internship opportunities</p>
+                    </div>
+                </div>
 
-    <br><br>
-    <button type="submit">Create Account</button>
-</form>
+                <div class="role-box" onclick="selectRole('admin', this)">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div>
+                        <h4>University Admin</h4>
+                        <p>Manage the placement process</p>
+                    </div>
+                </div>
 
-<script>
-function selectRole(role, element) {
-    document.getElementById("role").value = role;
+                <div class="role-box" onclick="selectRole('supervisor', this)">
+                    <i class="fa-solid fa-book-open"></i>
+                    <div>
+                        <h4>Supervisor</h4>
+                        <p>Assess & grade students</p>
+                    </div>
+                </div>
+            </div>
 
-    let boxes = document.querySelectorAll('.role-box');
-    boxes.forEach(box => box.classList.remove('selected'));
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" placeholder="Briton Chadiku" required>
+            </div>
 
-    element.classList.add('selected');
-}
-</script>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="britonchadiku@gmail.com" required>
+            </div>
 
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="password" id="password" placeholder="••••••••" required>
+                    <i class="fa-regular fa-eye toggle-password" onclick="togglePassword()"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Create Account</button>
+        </form>
+
+        <div class="form-footer">
+            Already have an account? <a href="/login">Sign In</a>
+        </div>
+    </div>
+
+    <script>
+    function selectRole(role, element) {
+        document.getElementById("role").value = role;
+        let boxes = document.querySelectorAll('.role-box');
+        boxes.forEach(box => box.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    function togglePassword() {
+        var p = document.getElementById("password");
+        p.type = (p.type === "password") ? "text" : "password";
+    }
+    </script>
 </body>
 </html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Profile - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">...</div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="color: #1e293b;">Company Profile</h2>
+                <span class="status-badge pending">Pending Verification</span>
+            </div>
+
+            {% if not is_complete %}
+            <div class="content-card" style="background: white; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <h4 style="margin-bottom: 20px;">Company Details</h4>
+                <form action="/organization/profile" method="POST">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <label class="form-label">Company Name *</label>
+                            <input type="text" class="form-input" value="{{ profile.full_name }}" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">Industry</label>
+                            <input type="text" name="industry" class="form-input" placeholder="e.g. Technology, Healthcare">
+                        </div>
+                        <div>
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-input" placeholder="City, Country">
+                        </div>
+                        <div>
+                            <label class="form-label">Website</label>
+                            <input type="url" name="website" class="form-input" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-input" style="height: 100px;" placeholder="Tell us about your company..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                        <div>
+                            <label class="form-label">Contact Email</label>
+                            <input type="email" name="email" class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label">Contact Phone</label>
+                            <input type="text" name="phone" class="form-input">
+                        </div>
+                    </div>
+                    <button type="submit" class="save-btn" style="margin-top: 30px;">Save Profile</button>
+                </form>
+            </div>
+
+            {% else %}
+            <div class="content-card" style="background: white; padding: 40px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0;">
+                <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 20px;">{{ initial }}</div>
+                <h3 style="margin-bottom: 5px;">{{ profile.full_name }}</h3>
+                <p style="color: #64748b; font-size: 14px;"><i class="fa-solid fa-location-dot"></i> {{ profile.location }}</p>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #f1f5f9;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: left;">
+                    <div>
+                        <p style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Industry</p>
+                        <p style="font-weight: 500;">{{ profile.industry }}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Website</p>
+                        <a href="{{ profile.website }}" target="_blank" style="color: #0d9488; text-decoration: none;">{{ profile.website }}</a>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Contact</p>
+                        <p style="font-weight: 500;">{{ profile.contact_email }}</p>
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-top: 30px; background: #f8fafc; padding: 20px; border-radius: 8px;">
+                    <p style="font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px;">About</p>
+                    <p style="line-height: 1.6; color: #475569;">{{ profile.description }}</p>
+                </div>
+                
+                <button onclick="window.location.reload()" class="save-btn" style="background: #f1f5f9; color: #475569; margin-top: 30px;">Edit Profile</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

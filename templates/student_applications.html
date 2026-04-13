@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Applications - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Student</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/student/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/internships"><i class="fa-solid fa-magnifying-glass"></i> Browse Opportunities</a>
+            <a href="/student/applications" class="active"><i class="fa-solid fa-file-lines"></i> My Applications</a>
+            <a href="/student/logbook"><i class="fa-solid fa-book"></i> Logbook</a>
+            <a href="/student/reports"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+            <a href="/student/profile"><i class="fa-solid fa-user"></i> Profile</a>
+        </nav>
+        <div class="sign-out">
+            <a href="/"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="margin-bottom: 30px; color: #1e293b; font-weight: 600;">My Applications</h2>
+
+            <div class="applications-list">
+                {% if apps %}
+                    {% for app in apps %}
+                    <div class="app-card">
+                        <div class="app-info">
+                            <h3>{{ app.title | upper }}</h3>
+                            <p class="app-meta">{{ app.category }} • {{ app.location }}</p>
+                            <p class="app-date">Applied: {{ app.applied_date }}</p>
+                        </div>
+                        <div class="app-status">
+                            <span class="status-badge {{ app.status }}">{{ app.status }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No applications found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

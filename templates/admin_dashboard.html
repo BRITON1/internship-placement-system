@@ -1,2 +1,67 @@
-<h2>Admin Dashboard ⚙️</h2>
-<p>Manage system users and reports.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Admin</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard" class="active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/allocations"><i class="fa-solid fa-user-check"></i> Allocations</a>
+            <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="/admin/audit-logs"><i class="fa-solid fa-file-shield"></i> Audit Logs</a>
+            <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="/logout" style="color: var(--text-muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="admin-banner">
+                <h1>Admin Dashboard</h1>
+                <p>Overview of the placement system.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info"><h4>Total Students</h4><span>0</span></div>
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info"><h4>Organizations</h4><span>0</span></div>
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info"><h4>Placed Students</h4><span>0</span></div>
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info"><h4>Pending Approvals</h4><span>0</span></div>
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

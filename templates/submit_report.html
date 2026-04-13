@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Report - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .form-card { background: white; width: 100%; max-width: 700px; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; }
+        .form-header { margin-bottom: 30px; text-align: center; }
+        .form-header h2 { color: #1e293b; margin-bottom: 8px; font-size: 1.75rem; }
+        .form-header p { color: #64748b; font-size: 0.95rem; }
+        
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-weight: 600; color: #334155; margin-bottom: 10px; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: 0.3s; box-sizing: border-box; background-color: #f8fafc; }
+        .form-control:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); background-color: #fff; }
+        
+        textarea.form-control { min-height: 120px; resize: vertical; line-height: 1.5; }
+        
+        .form-actions { display: flex; gap: 15px; margin-top: 35px; }
+        .btn-submit { flex: 2; background: #1e293b; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        .btn-submit:hover { background: #334155; transform: translateY(-1px); }
+        .btn-cancel { flex: 1; background: #f1f5f9; color: #64748b; text-align: center; text-decoration: none; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; transition: 0.3s; line-height: 1; display: flex; align-items: center; justify-content: center; }
+        .btn-cancel:hover { background: #e2e8f0; color: #1e293b; }
+        
+        .file-hint { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; font-style: italic; }
+        .section-divider { height: 1px; background: #f1f5f9; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="form-card">
+        <div class="form-header">
+            <i class="fa-solid fa-file-contract" style="font-size: 3rem; color: #3b82f6; margin-bottom: 15px;"></i>
+            <h2>Submit Internship Report</h2>
+            <p>Fill in your progress details and upload any supporting documents.</p>
+        </div>
+
+        <form action="{{ url_for('submit_report') }}" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-group">
+                <label for="title">Report Title</label>
+                <input type="text" id="title" name="title" class="form-control" placeholder="e.g., Week 5 Progress Report - Networking" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label for="type">Report Category</label>
+                    <select id="type" name="type" class="form-control">
+                        <option value="weekly">Weekly Report</option>
+                        <option value="monthly">Monthly Report</option>
+                        <option value="mid-term">Mid-Term Evaluation</option>
+                        <option value="final">Final Report</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">Reporting Date</label>
+                    <input type="date" id="date" name="report_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="achievements">Key Achievements & Activities</label>
+                <textarea id="achievements" name="achievements" class="form-control" placeholder="What tasks did you complete this period?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="challenges">Challenges & Lessons Learned</label>
+                <textarea id="challenges" name="challenges" class="form-control" placeholder="Any technical hurdles? How did you overcome them?"></textarea>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="form-group">
+                <label for="file">Attachment (Optional PDF/DOCX)</label>
+                <input type="file" id="file" name="report_file" class="form-control">
+                <p class="file-hint">Note: Please ensure the file is under 5MB and follows the department naming convention.</p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('student_reports') }}" class="btn-cancel">Discard</a>
+                <button type="submit" class="btn-submit">Submit Official Report</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

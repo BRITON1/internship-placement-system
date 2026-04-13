@@ -1,2 +1,69 @@
-<h2>Supervisor Dashboard 👨‍🏫</h2>
-<p>Monitor and assess students.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Supervisor Dashboard - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Supervisor</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/supervisor/dashboard" class="active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/supervisor/assigned-students"><i class="fa-solid fa-users"></i> Assigned Students</a>
+            <a href="/supervisor/logbooks"><i class="fa-solid fa-book-open"></i> Logbooks</a>
+            <a href="/supervisor/assessments"><i class="fa-solid fa-clipboard-check"></i> Assessments</a>
+            <a href="/supervisor/profile"><i class="fa-solid fa-user"></i> Profile</a>
+            <hr style="border: 0.5px solid #2d3748; margin: 20px 0;">
+            <a href="/logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #d1fae5; color: #059669;">{{ initial }}</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="hero-banner" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/images/banner-bg.png'); height: 200px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; padding-left: 40px; color: white; margin-bottom: 30px; background-size: cover;">
+                <h1 style="font-size: 28px;">Supervisor Dashboard</h1>
+                <p style="opacity: 0.9;">Monitor and assess your assigned students.</p>
+            </div>
+
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                
+                <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="color: #64748b; font-size: 14px;">Assigned Students</p>
+                        <h2 style="font-size: 32px; color: #1e293b; margin-top: 5px;">{{ assigned_count }}</h2>
+                    </div>
+                    <i class="fa-solid fa-users-viewfinder" style="font-size: 30px; color: #10b981; opacity: 0.3;"></i>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="color: #64748b; font-size: 14px;">Pending Reviews</p>
+                        <h2 style="font-size: 32px; color: #1e293b; margin-top: 5px;">{{ pending_reviews }}</h2>
+                    </div>
+                    <i class="fa-solid fa-book-open" style="font-size: 30px; color: #10b981; opacity: 0.3;"></i>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="color: #64748b; font-size: 14px;">Submitted Grades</p>
+                        <h2 style="font-size: 32px; color: #1e293b; margin-top: 5px;">{{ submitted_grades }}</h2>
+                    </div>
+                    <i class="fa-solid fa-clipboard-check" style="font-size: 30px; color: #10b981; opacity: 0.3;"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

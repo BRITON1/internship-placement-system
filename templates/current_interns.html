@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Interns - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .intern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .intern-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #3b82f6; /* Blue theme for active interns */
+            transition: 0.3s;
+        }
+        .intern-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .avatar-circle {
+            width: 50px;
+            height: 50px;
+            background: #eff6ff;
+            color: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .action-area {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Organization</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="/organization/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/organization/post_slots"><i class="fa-solid fa-plus"></i> Post Slots</a>
+            <a href="/organization/applicants"><i class="fa-solid fa-file-invoice"></i> Applications</a>
+            <a href="/organization/interns" class="active"><i class="fa-solid fa-users"></i> Current Interns</a>
+            <a href="/organization/evaluations"><i class="fa-solid fa-star"></i> Evaluations</a>
+            <a href="/organization/profile"><i class="fa-solid fa-building"></i> Company Profile</a>
+        </nav>
+
+        <div class="sign-out">
+            <a href="{{ url_for('logout') }}">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar" style="background: #dcfce7; color: #166534; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">T</div>
+        </div>
+
+        <div class="dashboard-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="font-weight: 700; color: #1e293b; margin: 0;">Current Interns</h2>
+                <span style="background: #f1f5f9; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: #475569; font-weight: 600;">
+                    Active Count: {{ interns|length }}
+                </span>
+            </div>
+
+            {% if interns %}
+            <div class="intern-grid">
+                {% for intern in interns %}
+                <div class="intern-card">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <div class="avatar-circle">
+                            {{ intern.student_name[0] | upper }}
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1rem; color: #1e293b;">{{ intern.student_name }}</h3>
+                            <p style="margin: 0; font-size: 0.8rem; color: #3b82f6; font-weight: 600;">{{ intern.internship_role }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>{{ intern.student_email }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Started: {{ intern.start_date or 'Recent' }}</span>
+                    </div>
+
+                    <div class="action-area">
+                        <a href="/organization/evaluate/{{ intern.app_id }}" class="btn-entry btn-sm">
+                            <i class="fa-solid fa-pen-to-square"></i> Evaluate
+                        </a>
+                        <a href="mailto:{{ intern.student_email }}" class="btn-entry btn-sm" style="background: #64748b;">
+                            <i class="fa-solid fa-envelope-open"></i> Contact
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 80px 20px; border: 2px dashed #e2e8f0; border-radius: 12px; background: white;">
+                <i class="fa-solid fa-users-slash" style="font-size: 3.5rem; color: #cbd5e1; margin-bottom: 20px; display: block;"></i>
+                <h3 style="color: #64748b; margin-bottom: 10px;">No active interns yet</h3>
+                <p style="color: #94a3b8; max-width: 400px; margin: 0 auto 20px;">Once you accept student applications from the "Applications" tab, they will appear here automatically.</p>
+                <a href="/organization/applicants" class="btn-entry">Review Applications</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

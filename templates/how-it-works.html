@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>How It Works - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* White background for the top section */
+        body { background: #ffffff; color: #1e293b; margin: 0; }
+        header { background: #ffffff; border-bottom: 1px solid #e2e8f0; }
+        nav a { color: #475569; }
+
+        .process-section {
+            padding: 80px 10%;
+            text-align: center;
+        }
+
+        .process-header h1 {
+            font-size: 38px;
+            color: #0f172a;
+            font-weight: 800;
+            display: inline-block;
+            position: relative;
+        }
+
+        .process-header h1::before {
+            content: "";
+            position: absolute;
+            left: -20px;
+            top: 20%;
+            height: 60%;
+            width: 4px;
+            background: #38b2ac;
+        }
+
+        .steps-container {
+            max-width: 800px;
+            margin: 60px auto;
+            text-align: left;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .step-number {
+            background: #e6fffa;
+            color: #38b2ac;
+            min-width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .step-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            color: #0f172a;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        /* Dark Footer Section */
+        .cta-footer {
+            background: linear-gradient(135deg, #1e2a4a 0%, #2d5a5e 50%, #1a936f 100%);
+            padding: 100px 10%;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-footer h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .cta-footer p {
+            color: #cbd5e0;
+            margin-bottom: 30px;
+        }
+
+        .footer-bottom {
+            background: #0f172a;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .btn-create {
+            background-color: #38b2ac;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><img src="{{ url_for('static', filename='images/logo.png') }}" height="40"></div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/user-roles">User Roles</a>
+            <a href="/how-it-works">How It Works</a>
+            <a href="/login">Sign In</a>
+            <a href="/register" class="get-started-btn">Get Started</a>
+        </nav>
+    </header>
+
+    <div class="process-section">
+        <div class="process-header">
+            <h1>How It Works</h1>
+        </div>
+
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h3>Register & Create Profile</h3>
+                    <p>Students and companies register on the platform and complete their profiles.</p>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h3>Browse & Apply</h3>
+                    <p>Students browse verified opportunities and submit applications online.</p>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h3>Review & Allocate</h3>
+                    <p>University coordinators review applications and allocate placements.</p>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">04</div>
+                <div class="step-content">
+                    <h3>Track & Assess</h3>
+                    <p>Supervisors monitor progress, review logbooks, and submit grades.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="cta-footer">
+        <h2>Ready to streamline your placements?</h2>
+        <p>Join universities and organizations already using InternHub.</p>
+        <a href="/register" class="btn-create">Create Your Account &rarr;</a>
+    </section>
+
+    <footer class="footer-bottom">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" height="30" style="filter: brightness(0) invert(1);">
+        <div>&copy; 2026 InternHub — Internship & Industrial Attachment Placement System</div>
+    </footer>
+
+</body>
+</html>

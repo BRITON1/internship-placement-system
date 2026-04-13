@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Allocations - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Admin</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+            <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
+            <a href="/admin/allocations" class="active"><i class="fa-solid fa-user-group"></i> Allocations</a>
+            <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="dashboard-container">
+            <h2 style="color: #1e293b; margin-bottom: 25px;">Student Allocations</h2>
+
+            <div class="content-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                <h4 style="margin-bottom: 20px; color: #1e293b;">Assign Student to Supervisor</h4>
+                <form action="/admin/allocations" method="POST" style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 8px;">Student</label>
+                        <select name="student_id" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <option value="">Select student</option>
+                            {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 8px;">Supervisor</label>
+                        <select name="supervisor_id" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <option value="">Select supervisor</option>
+                            {% for supervisor in supervisors %}
+                                <option value="{{ supervisor.id }}">{{ supervisor.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" style="background-color: #1e293b; color: white; padding: 11px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Assign</button>
+                </form>
+            </div>
+
+            <div class="content-card" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+                <h4 style="padding: 20px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">Current Assignments</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th style="text-align: left; padding: 15px; color: #64748b; font-size: 13px;">STUDENT</th>
+                            <th style="text-align: left; padding: 15px; color: #64748b; font-size: 13px;">SUPERVISOR</th>
+                            <th style="text-align: center; padding: 15px; color: #64748b; font-size: 13px;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if assignments %}
+                            {% for item in assignments %}
+                            <tr>
+                                <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">{{ item.student_name }}</td>
+                                <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">{{ item.supervisor_name }}</td>
+                                <td style="padding: 15px; border-bottom: 1px solid #f1f5f9; text-align: center;">
+                                    <button style="color: #ef4444; border: none; background: none; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; padding: 40px; color: #94a3b8;">No assignments yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

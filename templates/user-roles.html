@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Roles - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* White background layout to match the image */
+        body { background: #ffffff; color: #1e293b; }
+        header { background: #ffffff; border-bottom: 1px solid #e2e8f0; }
+        nav a { color: #475569; }
+
+        .roles-container {
+            padding: 80px 5%;
+            text-align: center;
+            background-color: #f8fafc; /* Slight off-white background */
+            min-height: 100vh;
+        }
+
+        .roles-header h1 {
+            font-size: 38px;
+            color: #0f172a;
+            font-weight: 800;
+            display: inline-block;
+            position: relative;
+        }
+
+        .roles-header h1::before {
+            content: "";
+            position: absolute;
+            left: -20px;
+            top: 20%;
+            height: 60%;
+            width: 4px;
+            background: #38b2ac;
+        }
+
+        .roles-header p {
+            color: #64748b;
+            font-size: 18px;
+            margin: 15px auto 60px;
+            max-width: 650px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .role-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: left;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .role-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .icon-box {
+            background: #e6fffa;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38b2ac;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .role-card h3 {
+            color: #0f172a;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .role-card p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .role-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .role-card ul li {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        /* The green bullet point dots */
+        .role-card ul li::before {
+            content: "•";
+            color: #38b2ac;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><img src="{{ url_for('static', filename='images/logo.png') }}" height="40"></div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/user-roles">User Roles</a>
+            <a href="/how-it-works">How It Works</a>
+            <a href="/login">Sign In</a>
+            <a href="/register" class="get-started-btn">Get Started</a>
+        </nav>
+    </header>
+
+    <div class="roles-container">
+        <div class="roles-header">
+            <h1>Built for Everyone</h1>
+            <p>Dedicated experiences for each user role in the placement ecosystem.</p>
+        </div>
+
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="icon-box"><i class="fa-solid fa-graduation-cap"></i></div>
+                <h3>Students</h3>
+                <p>Find and apply for internship placements seamlessly.</p>
+                <ul>
+                    <li>Create & manage profiles</li>
+                    <li>Browse opportunities</li>
+                    <li>Apply online</li>
+                    <li>Submit logbooks & reports</li>
+                    <li>Track feedback</li>
+                </ul>
+            </div>
+
+            <div class="role-card">
+                <div class="icon-box"><i class="fa-solid fa-building"></i></div>
+                <h3>Organizations</h3>
+                <p>Post slots and manage student interns efficiently.</p>
+                <ul>
+                    <li>Register & verify details</li>
+                    <li>Post internship slots</li>
+                    <li>Review applications</li>
+                    <li>Accept or reject applicants</li>
+                    <li>Evaluate performance</li>
+                </ul>
+            </div>
+
+            <div class="role-card">
+                <div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>University Admin</h3>
+                <p>Oversee the entire placement lifecycle.</p>
+                <ul>
+                    <li>Manage student records</li>
+                    <li>Approve organizations</li>
+                    <li>Allocate students</li>
+                    <li>Monitor placements</li>
+                    <li>Generate reports</li>
+                </ul>
+            </div>
+
+            <div class="role-card">
+                <div class="icon-box"><i class="fa-solid fa-book-open"></i></div>
+                <h3>Supervisors</h3>
+                <p>Guide and assess student interns remotely.</p>
+                <ul>
+                    <li>View assigned students</li>
+                    <li>Review logbooks & reports</li>
+                    <li>Submit assessments</li>
+                    <li>Grade performance</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

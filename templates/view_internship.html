@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Internships</title>
+</head>
+<body>
+
+    <h2>Available Internships 🎓</h2>
+
+    {% if internships %}
+        {% for internship in internships %}
+            <div style="border:1px solid #000; padding:10px; margin:10px;">
+
+                <h3>{{ internship.title }}</h3>
+                <p><strong>Company:</strong> {{ internship.company_name }}</p>
+                <p><strong>Description:</strong> {{ internship.description }}</p>
+                <p><strong>Location:</strong> {{ internship.location }}</p>
+                <p><strong>Stipend:</strong> {{ internship.stipend }}</p>
+                <p><strong>Deadline:</strong> {{ internship.deadline }}</p>
+
+                <form action="/apply" method="POST">
+                    <input type="hidden" name="internship_id" value="{{ internship.id }}">
+                    
+                    <!-- TEMP USER (will upgrade later) -->
+                    <input type="hidden" name="user_id" value="1">
+
+                    <button type="submit">Apply</button>
+                </form>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No internships available.</p>
+    {% endif %}
+
+    <br>
+    <a href="/student/dashboard">⬅ Back to Dashboard</a>
+
+</body>
+</html>
