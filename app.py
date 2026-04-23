@@ -1,31 +1,81 @@
-from flask import Flask, render_template, request, redirect, url_for
-from database.db_connection import get_db_connection
-import mysql.connector
-# UPDATE THIS LINE AT THE TOP OF app.py
 from flask import Flask, render_template, request, redirect, url_for, session
+from database.db_connection import get_db_connection
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from datetime import timedelta
+import mysql.connector
 
-# Also ensure you have a secret key set, or sessions won't work!
+# --- 1. APP CONFIGURATION ---
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # You need this line!
+app.secret_key = 'f564aa5df65f5fed3071d62875f6ae69'
+
+# Set session timeout to 10 minutes
+app.permanent_session_lifetime = timedelta(minutes=10)
+
+# --- 2. SECURITY DECORATORS (The Guards) ---
+
+# General Guard: Just checks if ANY user is logged in
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Admin Guard: Checks for 'admin' role
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'admin':
+            return "Access Denied: Admins Only. 🚫", 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Supervisor Guard: Checks for 'supervisor' role
+
+
+def supervisor_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'supervisor':
+            return "Access Denied: Supervisors Only. 🚫", 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- 3. SESSION REFRESHER ---
+
+
+@app.before_request
+def handle_session():
+    # This keeps the session alive as long as the user is clicking
+    session.permanent = True
+
+# --- 4. ROUTES START BELOW ---  # You need this line!
 
 
 # =========================
 # AUDIT LOG FUNCTION
 # =========================
 def log_action(action, user_email):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    query = "INSERT INTO audit_logs (action, user_email) VALUES (%s, %s)"
-    cursor.execute(query, (action, user_email))
-    conn.commit()
-
-    cursor.close()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "INSERT INTO audit_logs (action, user_email) VALUES (%s, %s)"
+        cursor.execute(query, (action, user_email))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"LOGGING ERROR (Non-critical): {e}")
 
 
 # =========================
-# HOME
+# HOME ROUTE
 # =========================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -33,82 +83,104 @@ def login():
         return render_template('login.html')
 
     email = request.form.get('email')
-    password = request.form.get('password')
+    password_candidate = request.form.get('password')
 
+    # Start connection
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    query = "SELECT * FROM users WHERE email=%s AND password=%s"
-    cursor.execute(query, (email, password))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # Search by email
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
 
-    if user:
-        session['user_id'] = user['id']
-        session['full_name'] = user['full_name']
-        session['email'] = user['email']
+        # Security Verification
+        if user and check_password_hash(user['password'], password_candidate):
+            # 1. Populate all session variables
+            session['user_id'] = user['id']
+            session['full_name'] = user['full_name']
+            session['role'] = user['role']
+            session['email'] = user['email']
+            session.permanent = True
 
-        role = user['role']
-        if role == 'student':
-            return redirect(url_for('student_dashboard'))
-        if role == 'organization':
-            return redirect(url_for('organization_dashboard'))
-        if role == 'supervisor':
-            return redirect(url_for('supervisor_dashboard'))
-        if role == 'admin':
-            return redirect(url_for('admin_dashboard'))
+            # 2. Advanced Role-based Redirection
+            dashboards = {
+                'student': 'student_dashboard',
+                'organization': 'organization_dashboard',
+                'supervisor': 'supervisor_dashboard',
+                'admin': 'admin_dashboard'
+            }
+            return redirect(url_for(dashboards.get(user['role'], 'login')))
 
-    return "Invalid credentials ❌"
+        # 3. Fail Case: Return to login page with error message
+        return render_template('login.html', error="Invalid email or password ❌")
+
+    except Exception as e:
+        print(f"Login System Error: {e}")
+        return render_template('login.html', error="A system error occurred. Please try again.")
+
+    finally:
+        # Crucial for JOOUST server stability: Always close the gate
+        cursor.close()
+        conn.close()
 # =========================
 # AUTH (REGISTER + LOGIN)
 # =========================
 
 
-@app.route('/register', methods=['GET'])
-def register_page():
-    return render_template('register.html')
-
-
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    full_name = request.form.get('full_name')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    role = request.form.get('role')
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role')
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+        # 1. SECURITY: Only allow these roles via public registration
+        if role not in ['student', 'organization']:
+            return "Unauthorized role selection. ⛔", 403
 
-    query = """
-    INSERT INTO users (full_name, email, password, role)
-    VALUES (%s, %s, %s, %s)
-    """
+        # 2. HASHING: Never store plain text!
+        hashed_pw = generate_password_hash(password)
 
-    try:
-        cursor.execute(query, (full_name, email, password, role))
-        conn.commit()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            query = "INSERT INTO users (full_name, email, password, role) VALUES (%s, %s, %s, %s)"
+            cursor.execute(query, (full_name, email, hashed_pw, role))
+            conn.commit()
+            log_action("User Registered", email)
+            return redirect(url_for('login'))
+        except Exception as e:
+            return f"An error occurred: {e}"
+        finally:
+            cursor.close()
+            conn.close()
 
-        # ✅ LOG ACTION
-        log_action("User Registered", email)
+    return render_template('register.html')
+# ========================
+# Notifications
+# ========================
 
-        return redirect(url_for('login_page'))
 
-    except mysql.connector.errors.IntegrityError:
-        return "Email already exists 🤷‍♂️"
-
-    finally:
+@app.context_processor
+def inject_notifications():
+    user_id = session.get('user_id')
+    if user_id:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT message, created_at FROM notifications WHERE user_id = %s ORDER BY created_at DESC LIMIT 5", (user_id,))
+        notifications = cursor.fetchall()
         cursor.close()
         conn.close()
-
-
-# ========================
-# LOGIN
-# ========================
-
+        return dict(notifications=notifications)
+    return dict(notifications=[])
 
 # =========================
 # DASHBOARDS
 # =========================
+
+
 @app.route('/student/reports')
 def student_reports():
     # Fetch reports from your database here
@@ -127,8 +199,6 @@ def submit_report():
 # =========================
 # STUDENT DASHBOARD
 # =========================
-
-
 @app.route('/student/dashboard')
 def student_dashboard():
     user_id = session.get('user_id')
@@ -138,35 +208,68 @@ def student_dashboard():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # 1. Fetch student's logbook history
-    cursor.execute("""
-        SELECT activity_date, week_number, status, supervisor_comment
-        FROM logbooks
-        WHERE student_id = %s
-        ORDER BY activity_date DESC
-    """, (user_id,))
-    logs = cursor.fetchall()
+    try:
+        # 1. Fetch student's logbook history
+        cursor.execute("""
+            SELECT activity_date, week_number, status, supervisor_comment, grade
+            FROM logbooks
+            WHERE student_id = %s
+            ORDER BY activity_date DESC
+        """, (user_id,))
+        logs = cursor.fetchall()
 
-    # 2. Get student name for avatar
-    cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    initial = user['full_name'][0].upper() if user else "K"
+        # 2. Progress Logic
+        cursor.execute("""
+            SELECT COUNT(DISTINCT week_number) as count 
+            FROM logbooks 
+            WHERE student_id = %s
+        """, (user_id,))
+        log_count = cursor.fetchone()['count']
 
-    # 3. Fetch Application Stats for the Dashboard Cards
-    cursor.execute(
-        "SELECT COUNT(*) as total FROM applications WHERE student_id = %s", (user_id,))
-    app_count = cursor.fetchone()['total']
+        # 3. Fetch recent notifications
+        cursor.execute("""
+            SELECT message, created_at 
+            FROM notifications 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC LIMIT 5
+        """, (user_id,))
+        notifications = cursor.fetchall()
 
-    # You can add more specific counts here later (Accepted/Rejected)
-    # cursor.execute("SELECT COUNT(*) as accepted FROM applications WHERE student_id = %s AND status='accepted'", (user_id,))
+        # 4. User Details
+        cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+        user_data = cursor.fetchone()
+        full_name = user_data['full_name'] if user_data else "Student"
+        initial = full_name[0].upper() if full_name else "S"
 
-    cursor.close()
-    conn.close()
+        # 5. Corrected Stats Query
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,
+                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+            FROM applications 
+            WHERE student_id = %s
+        """, (user_id,))
+        stats = cursor.fetchone()
 
-    return render_template('student_dashboard.html',
-                           logs=logs,
-                           initial=initial,
-                           app_count=app_count)
+        return render_template('student_dashboard.html',
+                               logs=logs,
+                               log_count=log_count,
+                               notifications=notifications,
+                               full_name=full_name,
+                               initial=initial,
+                               app_count=stats['total'] or 0,
+                               pending_count=stats['pending'] or 0,
+                               accepted_count=stats['accepted'] or 0,
+                               rejected_count=stats['rejected'] or 0)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return "Internal Server Error", 500
+    finally:
+        cursor.close()
+        conn.close()
 
 # =========================
 # STUDENT: NEW LOGBOOK SUBMISSION
@@ -232,14 +335,42 @@ def view_logbook():
 
 @app.route('/organization/dashboard')
 def organization_dashboard():
-    # Example values - replace with your actual database query results
-    open_slots = 1
-    pending_apps = 1
-    active_interns = 0
-    company_name = "Tech Corp"  # Get from session
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
 
-    # Generate initials for the display picture
-    initial = company_name[0].upper() if company_name else "T"
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # 1. Get Open Slots (Total capacity across all posts by this org)
+    cursor.execute(
+        "SELECT SUM(slots) as total FROM internships WHERE organization_id = %s", (user_id,))
+    result = cursor.fetchone()
+    open_slots = result['total'] if result['total'] else 0
+
+    # 2. Get Pending Applications (Count students waiting for a response)
+    cursor.execute("""
+        SELECT COUNT(*) as total FROM applications a
+        JOIN internships i ON a.internship_id = i.id
+        WHERE i.organization_id = %s AND a.status = 'pending'
+    """, (user_id,))
+    pending_apps = cursor.fetchone()['total']
+
+    # 3. Get Active Interns (Count students already accepted)
+    cursor.execute("""
+        SELECT COUNT(*) as total FROM applications a
+        JOIN internships i ON a.internship_id = i.id
+        WHERE i.organization_id = %s AND a.status = 'accepted'
+    """, (user_id,))
+    active_interns = cursor.fetchone()['total']
+
+    # 4. Get Company Name for Initials
+    cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    initial = user['full_name'][0].upper() if user else "T"
+
+    cursor.close()
+    conn.close()
 
     return render_template('organization_dashboard.html',
                            open_slots=open_slots,
@@ -255,34 +386,75 @@ def organization_dashboard():
 # SUPERVISORS DASHBOARD
 # ========================
 @app.route('/supervisor/dashboard')
+@supervisor_required
 def supervisor_dashboard():
     supervisor_id = session.get('user_id')
-    if not supervisor_id:
-        return redirect(url_for('login'))
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Count Assigned Students
-    cursor.execute(
-        "SELECT COUNT(*) AS count FROM allocations WHERE supervisor_id = %s", (supervisor_id,))
-    assigned_count = cursor.fetchone()['count']
+    # Initialize chart data to 0 to prevent HTML crashes
+    logbook_stats = {'approved': 0, 'pending': 0, 'rejected': 0}
 
-    # Get supervisor name for the initial avatar
-    cursor.execute("SELECT full_name FROM users WHERE id = %s",
-                   (supervisor_id,))
-    user = cursor.fetchone()
-    initial = user['full_name'][0].upper() if user else "S"
+    try:
+        # 1. Total Assigned (Your existing logic)
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM allocations WHERE supervisor_id = %s", (supervisor_id,))
+        assigned_count = cursor.fetchone()['count']
 
-    cursor.close()
-    conn.close()
+        # 2. Pending Logbook Reviews (Your existing logic)
+        cursor.execute("""
+            SELECT COUNT(l.id) AS count 
+            FROM logbooks l
+            JOIN allocations a ON l.student_id = a.student_id
+            WHERE a.supervisor_id = %s AND l.status = 'pending'
+        """, (supervisor_id,))
+        pending_reviews = cursor.fetchone()['count']
 
-    return render_template('supervisor_dashboard.html',
-                           assigned_count=assigned_count,
-                           pending_reviews=0,
-                           submitted_grades=0,
-                           initial=initial)
+        # 3. New Technical Assessments (The JOOUST Requirement)
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM assessments WHERE supervisor_id = %s", (supervisor_id,))
+        submitted_grades = cursor.fetchone()['count']
 
+        # 4. Avatar Initial
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s", (supervisor_id,))
+        user_data = cursor.fetchone()
+        initial = user_data['full_name'][0].upper() if user_data else "S"
+
+        # 5. GRAPHICAL DATA: Logbook Review Progress
+        # This fetches the status of all logbooks for students assigned to THIS supervisor
+        cursor.execute("""
+            SELECT l.status, COUNT(l.id) as count 
+            FROM logbooks l
+            JOIN allocations a ON l.student_id = a.student_id
+            WHERE a.supervisor_id = %s
+            GROUP BY l.status
+        """, (supervisor_id,))
+        status_results = cursor.fetchall()
+
+        for row in status_results:
+            status_key = row['status'].lower()
+            if status_key in logbook_stats:
+                logbook_stats[status_key] = row['count']
+
+        # Return exactly the variables your HTML expects
+        return render_template(
+            'supervisor_dashboard.html',
+            assigned_count=assigned_count,
+            pending_reviews=pending_reviews,
+            submitted_grades=submitted_grades,
+            initial=initial,
+            logbook_stats=logbook_stats  # Pass the chart data!
+        )
+
+    except Exception as e:
+        print(f"Supervisor Dashboard Error: {e}")
+        return "Internal Error", 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 # =========================
 # SUPERVISOR: ASSIGNED STUDENTS LIST
 # =========================
@@ -360,100 +532,142 @@ def view_student_logs():
     return render_template('supervisor_logbooks.html', logs=logs, initial=initial)
 
 
-@app.route('/supervisor/logbook/approve/<int:log_id>', methods=['POST'])
-def approve_log(log_id):
-    comment = request.form.get('comment')
-    status = request.form.get('status')  # 'approved' or 'revision_requested'
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE logbooks SET status=%s, supervisor_comment=%s WHERE id=%s",
-                   (status, comment, log_id))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('view_student_logs'))
-
-
-@app.route('/supervisor/assessments')
-def view_assessments():
+@app.route('/supervisor/approve_logbook/<int:log_id>', methods=['POST'])
+def approve_logbook(log_id):
     supervisor_id = session.get('user_id')
     if not supervisor_id:
         return redirect(url_for('login'))
+
+    # Get form data
+    status = request.form.get('status')  # e.g., 'approved' or 'revision'
+    comment = request.form.get('comment')
+    grade = request.form.get('grade')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Join with users to get student names
-    query = """
-        SELECT a.*, u.full_name as student_name 
-        FROM assessments a
-        JOIN users u ON a.student_id = u.id
-        WHERE a.supervisor_id = %s
-        ORDER BY a.assessment_date DESC
-    """
-    cursor.execute(query, (supervisor_id,))
-    assessments = cursor.fetchall()
+    # 1. First, find out the student_id associated with this logbook
+    cursor.execute("SELECT student_id FROM logbooks WHERE id = %s", (log_id,))
+    log_entry = cursor.fetchone()
 
-    # Get initial for avatar
-    cursor.execute("SELECT full_name FROM users WHERE id = %s",
-                   (supervisor_id,))
-    user = cursor.fetchone()
-    initial = user['full_name'][0].upper() if user else "S"
+    if log_entry:
+        student_id = log_entry['student_id']
+
+        # 2. Update the logbook with the grade and comment
+        cursor.execute("""
+            UPDATE logbooks 
+            SET status = %s, supervisor_comment = %s, grade = %s 
+            WHERE id = %s
+        """, (status, comment, grade, log_id))
+
+        # 3. Insert the notification for the student
+        notification_msg = f"Your logbook has been {status}. Grade: {grade}/10."
+        cursor.execute(
+            "INSERT INTO notifications (user_id, message) VALUES (%s, %s)",
+            (student_id, notification_msg)
+        )
+
+        conn.commit()
 
     cursor.close()
     conn.close()
-    return render_template('supervisor_assessments.html', assessments=assessments, initial=initial)
-# ===========================
-# NEW ASSESSMENT
-# ===========================
+
+    # Redirect back to the list of students or logbooks
+    return redirect(url_for('supervisor_dashboard'))
+
+
+# 1. VIEW ASSESSMENTS
+@app.route('/supervisor/assessments')
+@login_required
+def view_assessments():
+    supervisor_id = session.get('user_id')
+
+    # Check if the person logged in is actually a supervisor
+    if session.get('role') != 'supervisor':
+        return "Access Denied", 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        # Join with users to get student names for the table
+        query = """
+            SELECT a.*, u.full_name as student_name 
+            FROM assessments a
+            JOIN users u ON a.student_id = u.id
+            WHERE a.supervisor_id = %s
+            ORDER BY a.assessment_date DESC
+        """
+        cursor.execute(query, (supervisor_id,))
+        assessments = cursor.fetchall()
+
+        # Get initial for the top-right avatar
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s", (supervisor_id,))
+        user = cursor.fetchone()
+        initial = user['full_name'][0].upper() if user else "S"
+
+        return render_template('supervisor_assessments.html',
+                               assessments=assessments,
+                               initial=initial)
+    finally:
+        cursor.close()
+        conn.close()
+
+# 2. SUBMIT NEW ASSESSMENT
 
 
 @app.route('/supervisor/assessment/new', methods=['GET', 'POST'])
+@login_required
 def new_assessment():
     supervisor_id = session.get('user_id')
-    if not supervisor_id:
-        return redirect(url_for('login'))
+    if session.get('role') != 'supervisor':
+        return "Access Denied", 403
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
-        student_id = request.form.get('student_id')
-        attendance = request.form.get('attendance')
-        skills = request.form.get('skills')
-        attitude = request.form.get('attitude')
-        overall = request.form.get('overall')
-        comments = request.form.get('comments')
+        try:
+            student_id = request.form.get('student_id')
+            attendance = request.form.get('attendance')
+            skills = request.form.get('skills')
+            attitude = request.form.get('attitude')
+            overall = request.form.get('overall')
+            comments = request.form.get('comments')
 
-        # Insert into the assessments table
-        query = """
-            INSERT INTO assessments (student_id, supervisor_id, attendance_score, skills_score, attitude_score, overall_score, comments)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(query, (student_id, supervisor_id,
-                       attendance, skills, attitude, overall, comments))
-        conn.commit()
+            query = """
+                INSERT INTO assessments 
+                (student_id, supervisor_id, attendance_score, skills_score, attitude_score, overall_score, comments)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (student_id, supervisor_id,
+                           attendance, skills, attitude, overall, comments))
+            conn.commit()
 
-        log_action(
-            f"Submitted Assessment for Student ID {student_id}", session.get('email'))
+            log_action(
+                f"Submitted Assessment for Student ID {student_id}", session.get('email'))
+            return redirect(url_for('view_assessments'))
+        except Exception as e:
+            print(f"Error saving assessment: {e}")
+            return "Error saving assessment", 500
+        finally:
+            cursor.close()
+            conn.close()
 
+    # GET Method: Only show students assigned to THIS supervisor
+    try:
+        cursor.execute("""
+            SELECT u.id, u.full_name 
+            FROM allocations a
+            JOIN users u ON a.student_id = u.id
+            WHERE a.supervisor_id = %s
+        """, (supervisor_id,))
+        assigned_students = cursor.fetchall()
+        return render_template('new_assessment.html', students=assigned_students)
+    finally:
         cursor.close()
         conn.close()
-        return redirect(url_for('view_assessments'))
-
-    # If GET, fetch the list of assigned students to populate the dropdown
-    cursor.execute("""
-        SELECT u.id, u.full_name, u.email 
-        FROM allocations a
-        JOIN users u ON a.student_id = u.id
-        WHERE a.supervisor_id = %s
-    """, (supervisor_id,))
-    students = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-    return render_template('new_assessment.html', students=students)
 
 
 # =========================
@@ -512,30 +726,67 @@ def supervisor_profile():
 # =========================
 
 
-@app.route('/organization/post')
+@app.route('/organization/post', methods=['GET', 'POST'])
 def manage_slots():
-    # Get identifying info from session
     user_id = session.get('user_id')
     company = session.get('company_name', 'Organization')
+
+    if not user_id:
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # --- PART 1: HANDLING THE FORM SUBMISSION (POST) ---
+    if request.method == 'POST':
+        try:
+            # Capture all fields from your HTML form
+            title = request.form.get('title')
+            description = request.form.get('description')
+            category = request.form.get('category')
+            location = request.form.get('location')
+            slots = request.form.get('available_slots')
+            duration = request.form.get('duration')
+            requirements = request.form.get('requirements')
+            start_date = request.form.get('start_date')
+            # Using end_date as deadline for now
+            deadline = request.form.get('end_date')
+
+            query = """
+                INSERT INTO internships 
+                (user_id, title, description, location, slots, status, created_at) 
+                VALUES (%s, %s, %s, %s, %s, 'open', NOW())
+            """
+            cursor.execute(
+                query, (user_id, title, description, location, slots))
+            conn.commit()
+
+            # Success! Redirect back to the same page to see the updated list
+            return redirect(url_for('manage_slots'))
+
+        except Exception as e:
+            print(f"Error saving internship: {e}")
+            conn.rollback()
+        # Note: If you want to save category/duration, ensure those columns exist in your DB table first!
+
+    # --- PART 2: DISPLAYING THE LIST (GET) ---
     try:
-        # Check your database! If the column isn't 'company_name',
-        # change it to 'organization' or 'user_id' below
-        query = "SELECT * FROM internships WHERE company_name = %s"
-        cursor.execute(query, (company,))
+        # Fetching internships posted by this organization
+        # Using user_id is safer than company_name for the query
+        query = "SELECT * FROM internships WHERE user_id = %s ORDER BY created_at DESC"
+        cursor.execute(query, (user_id,))
         slots = cursor.fetchall()
     except Exception as e:
         print(f"SQL Error: {e}")
-        # If the query fails, we show an empty list instead of a 500 error
         slots = []
 
     initial = company[0].upper() if company else "T"
 
     cursor.close()
     conn.close()
+
+    # Check if we should show the list or the form
+    # If you want to keep them on separate pages, ensure this points to the right HTML
     return render_template('manage_slots.html', slots=slots, initial=initial)
 
 
@@ -559,66 +810,76 @@ def post_internship_page():
 
 @app.route('/internships')
 def view_internship():
+    user_id = session.get('user_id')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Fetching open internships as you already defined
-    cursor.execute("SELECT * FROM internships WHERE status='open'")
+    # 1. Fetch all internships
+    cursor.execute("SELECT * FROM internships")
     internships = cursor.fetchall()
+
+    # 2. Fetch IDs of internships this student has already applied for
+    cursor.execute(
+        "SELECT internship_id FROM applications WHERE student_id = %s", (user_id,))
+    applied_ids = [row['internship_id'] for row in cursor.fetchall()]
 
     cursor.close()
     conn.close()
 
-    # CHANGE THIS: Point it to student_dashboard.html so the sidebar stays visible
-    # Also ensure you pass 'initial' so the top-right avatar doesn't break
     return render_template('student_dashboard.html',
                            internships=internships,
-                           initial='K')  # Replace 'K' with actual user initial logic
-
+                           applied_ids=applied_ids)
 # =========================
 # STUDENT: APPLY FOR INTERNSHIP
 # =========================
 
 
 @app.route('/apply', methods=['POST'])
-def apply_internship():
-    internship_id = request.form.get('internship_id')
-    user_id = request.form.get('user_id')
-
+def apply():
+    # Let's call it user_id to match the session and the FK
+    user_id = session.get('user_id')
     if not user_id:
-        return "User not identified ❌"
+        return redirect(url_for('login'))
+
+    internship_id = request.form.get('internship_id')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # CHECK DUPLICATE
-    check_query = """
-    SELECT * FROM applications 
-    WHERE user_id=%s AND internship_id=%s
-    """
-    cursor.execute(check_query, (user_id, internship_id))
-    existing = cursor.fetchone()
+    try:
+        # 1. CHECK DUPLICATE (Using user_id to be safe)
+        check_query = "SELECT * FROM applications WHERE user_id=%s AND internship_id=%s"
+        cursor.execute(check_query, (user_id, internship_id))
+        existing = cursor.fetchone()
 
-    if existing:
+        if existing:
+            return "You have already applied for this position! ⚠️"
+
+        # 2. INSERT - CRITICAL FIX HERE
+        # We are inserting the session ID into BOTH user_id and student_id
+        # so that all your different route queries can find the data.
+        insert_query = """
+        INSERT INTO applications (user_id, student_id, internship_id, status)
+        VALUES (%s, %s, %s, 'pending')
+        """
+        cursor.execute(insert_query, (user_id, user_id, internship_id))
+        conn.commit()
+
+        # 3. LOG ACTION
+        log_action("Applied for Internship", user_id)
+
+    except Exception as e:
+        # If MySQL rejects the insert, it will print to your terminal now!
+        print(f"DATABASE ERROR IN APPLY ROUTE: {e}")
+        conn.rollback()  # Undo the failed transaction
+        return f"Database Error: Could not process application. Check terminal."
+
+    finally:
         cursor.close()
         conn.close()
-        return "You already applied ⚠️"
 
-    # INSERT
-    insert_query = """
-    INSERT INTO applications (user_id, internship_id, status)
-    VALUES (%s, %s, 'pending')
-    """
-    cursor.execute(insert_query, (user_id, internship_id))
-    conn.commit()
-
-    # ✅ LOG ACTION
-    log_action("Applied for Internship", user_id)
-
-    cursor.close()
-    conn.close()
-
-    return redirect(url_for('view_internship'))
+    # 4. REDIRECT
+    return redirect(url_for('student_applications'))
 
 
 # =========================
@@ -708,36 +969,81 @@ def admin_audit_logs():
 # ADMIN DASHBOARD
 # =========================
 @app.route('/admin/dashboard')
+@admin_required  # The security lock remains
 def admin_dashboard():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    # 1. Initialize all variables (Preventing Undefined Variable Errors)
+    students_count = 0
+    organizations_count = 0
+    placed_count = 0
+    pending_count = 0
+    supervisors_list = []
+    students_list = []
 
-    cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role='student'")
-    students = cursor.fetchone()['count']
+    # Initialize chart data with 0s to prevent front-end crashes if tables are empty
+    chart_data = {'pending': 0, 'accepted': 0, 'rejected': 0}
 
-    cursor.execute(
-        "SELECT COUNT(*) AS count FROM users WHERE role='organization'")
-    organizations = cursor.fetchone()['count']
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT COUNT(*) AS count FROM applications WHERE status='accepted'")
-    placed = cursor.fetchone()['count']
+        # --- SECTION A: THE COUNTS ---
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM users WHERE role='student'")
+        students_count = cursor.fetchone()['count']
 
-    cursor.execute(
-        "SELECT COUNT(*) AS count FROM applications WHERE status='pending'")
-    pending = cursor.fetchone()['count']
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM users WHERE role='organization'")
+        organizations_count = cursor.fetchone()['count']
 
-    cursor.close()
-    conn.close()
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM applications WHERE status='accepted'")
+        placed_count = cursor.fetchone()['count']
 
+        cursor.execute(
+            "SELECT COUNT(*) AS count FROM applications WHERE status='pending'")
+        pending_count = cursor.fetchone()['count']
+
+        # --- SECTION B: DATA FOR ASSIGNMENT ---
+        cursor.execute(
+            "SELECT id, full_name FROM users WHERE role='supervisor'")
+        supervisors_list = cursor.fetchall()
+
+        cursor.execute("SELECT id, full_name FROM users WHERE role='student'")
+        students_list = cursor.fetchall()
+
+        # --- SECTION C: CHART LOGIC (THE NEW UPGRADE) ---
+        # Fetch status distribution for real-time graphics
+        cursor.execute(
+            "SELECT status, COUNT(*) as count FROM applications GROUP BY status")
+        status_results = cursor.fetchall()
+
+        for row in status_results:
+            # We use .lower() to ensure the database string matches our dictionary key
+            status_key = row['status'].lower()
+            if status_key in chart_data:
+                chart_data[status_key] = row['count']
+
+        cursor.close()
+
+    except Exception as e:
+        print(f"Admin Dashboard Database Error: {e}")
+        # We don't return an error page here so the dashboard still loads with 0s
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+
+    # 2. Pass everything back to the HTML
     return render_template(
         'admin_dashboard.html',
-        students=students,
-        organizations=organizations,
-        placed=placed,
-        pending=pending
+        students=students_count,        # For stat cards
+        organizations=organizations_count,
+        placed=placed_count,
+        pending=pending_count,
+        supervisors=supervisors_list,   # For the supervisor dropdown
+        students_list=students_list,    # For the student dropdown
+        chart_data=chart_data           # FOR THE NEW GRAPH MODULE
     )
-
 # =========================
 # APPLICATION STATUS UPDATE (ACCEPT/REJECT)
 # =========================
@@ -820,8 +1126,8 @@ def index():
 
 @app.route('/logout')
 def logout():
-    # For simplicity, just redirect to home. In real app, you'd clear session/cookies.
-    return redirect(url_for('index'))
+    session.clear()
+    return redirect(url_for('login'))
 
 # =========================
 # STUDENT PROFILE
@@ -829,79 +1135,123 @@ def logout():
 
 
 @app.route('/student/profile')
+@login_required  # The Shield: Blocks access if no user_id is in session
 def student_profile():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    # 1. Retrieve the email we stored during login
+    # If this is missing, the redirect below handles it
+    user_email = session.get('email')
 
-    # In a real app, use session['email'] to get the current user
-    cursor.execute(
-        "SELECT full_name, email FROM users WHERE role='student' LIMIT 1")
-    user = cursor.fetchone()
+    # Refresh the 10-minute timeout timer
+    session.permanent = True
 
-    cursor.close()
-    conn.close()
+    user = None
+    conn = None
 
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 2. Fetch only the data we need for the profile
+        cursor.execute(
+            "SELECT full_name, email, role FROM users WHERE email = %s",
+            (user_email,)
+        )
+        user = cursor.fetchone()
+        cursor.close()
+
+    except Exception as e:
+        # Professional error handling (visible in your terminal)
+        print(f"CRITICAL: Profile Database Error: {e}")
+        return "Internal Server Error 500", 500
+    finally:
+        # Ensure the XAMPP/MySQL connection is closed properly
+        if conn and conn.is_connected():
+            conn.close()
+
+    # 3. Logic for the User Interface (UI)
     if user:
-        # Get the first letter of the name for the avatar
-        initial = user['full_name'][0].upper() if user['full_name'] else "U"
+        # Create a dynamic avatar initial (e.g., "B" for Briton)
+        full_name = user['full_name'].strip()
+        initial = full_name[0].upper() if full_name else "U"
 
-        name_parts = user['full_name'].split(' ')
+        # Split names safely: Handles "Briton", "Briton Chadiku", or "Briton Chadiku Amolo"
+        name_parts = full_name.split(' ')
         first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        # Joins all remaining parts as the last name
+        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
 
-        # Pass 'initial' to the template
         return render_template('student_profile.html',
                                user=user,
                                first_name=first_name,
                                last_name=last_name,
                                initial=initial)
 
-    return "User not found", 404
-
-
+    # 4. Safety Net: If user session exists but email isn't in DB
+    session.clear()
+    return redirect(url_for('login'))
 # =========================
 # STUDENT APPLICATIONS
 # =========================
+
+
 @app.route('/student/applications')
 def student_applications():
-    # Use session to make it real, or keep user_id = 1 for testing
-    user_id = session.get('user_id', 1)
+    # 1. Session Protection: Ensure user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    # Initialize variables to prevent "referenced before assignment" crashes
+    apps = []
+    initial = "S"
+    conn = None
 
     try:
-        # We JOIN internships to get the title/location
-        # and JOIN users/companies to get the name of the organization
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 2. Optimized Query: Use LEFT JOIN and dual-ID check
+        # This ensures that even if a company profile is missing, the app shows up.
+        # It also checks both ID columns to prevent the "empty window" issue.
         query = """
         SELECT 
             a.status, 
-            a.created_at AS date_applied,
+            a.created_at AS applied_date, 
             i.title, 
             i.location,
+            i.description,
             u.full_name AS company_name
         FROM applications a
         JOIN internships i ON a.internship_id = i.id
-        JOIN users u ON i.user_id = u.id
-        WHERE a.user_id = %s
+        LEFT JOIN users u ON i.user_id = u.id
+        WHERE a.user_id = %s OR a.student_id = %s
         ORDER BY a.created_at DESC
         """
-        cursor.execute(query, (user_id,))
-        applications = cursor.fetchall()
+        cursor.execute(query, (user_id, user_id))
+        apps = cursor.fetchall()
+
+        # 3. Avatar Context: Get the user's name safely
+        cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+        user_data = cursor.fetchone()
+        if user_data and user_data['full_name']:
+            initial = user_data['full_name'][0].upper()
+
+        cursor.close()
+
     except Exception as e:
-        print(f"Database Error: {e}")
-        applications = []
+        # This catches database crashes and prints the error instead of breaking the site
+        print(f"CRITICAL DATABASE ERROR: {e}")
+        # 'apps' is already an empty list, so the page will simply say "No applications found"
 
-    # Get initial for the avatar
-    cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    initial = user['full_name'][0].upper() if user else "S"
+    finally:
+        # 4. Safe Closure: Always close the connection if it was opened
+        if conn and conn.is_connected():
+            conn.close()
 
-    cursor.close()
-    conn.close()
-
-    # CRITICAL: Point this to student_dashboard.html since that's where the code is!
-    return render_template('student_dashboard.html', applications=applications, initial=initial)
+    # 5. Delivery: Using 'apps' to match your HTML {% for app in apps %}
+    return render_template('student_applications.html',
+                           apps=apps,
+                           initial=initial)
 
 
 # ===========================
@@ -1208,6 +1558,120 @@ def evaluate_student(app_id):
     cursor.close()
     conn.close()
     return render_template('evaluation_form.html', student=student, app_id=app_id)
+
+# ============================
+# ADMIN ADD STUDENTS
+# ===========================
+
+
+@app.route('/admin/add_supervisor', methods=['GET', 'POST'])
+@admin_required
+def add_supervisor():
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        password = "87770"  # Temporary default password
+        hashed_pw = generate_password_hash(password)
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # We insert into 'users' but set the role to 'supervisor'
+            cursor.execute(
+                "INSERT INTO users (full_name, email, password, role) VALUES (%s, %s, %s, 'supervisor')",
+                (full_name, email, hashed_pw)
+            )
+            conn.commit()
+            log_action(f"Created Supervisor: {email}", session.get('email'))
+            return redirect(url_for('admin_dashboard'))
+        except Exception as e:
+            return f"Error: {e}"
+        finally:
+            cursor.close()
+            conn.close()
+
+    return render_template('admin_add_supervisor.html')
+
+
+@app.route('/admin/assign_supervisor', methods=['POST'])
+@admin_required
+def assign_supervisor():
+    student_id = request.form.get('student_id')
+    supervisor_id = request.form.get('supervisor_id')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1. Check if the student is already assigned
+        cursor.execute(
+            "SELECT id FROM allocations WHERE student_id = %s", (student_id,))
+        if cursor.fetchone():
+            # Update the existing assignment
+            cursor.execute("UPDATE allocations SET supervisor_id = %s WHERE student_id = %s",
+                           (supervisor_id, student_id))
+        else:
+            # Create a brand new assignment
+            cursor.execute("INSERT INTO allocations (student_id, supervisor_id) VALUES (%s, %s)",
+                           (student_id, supervisor_id))
+
+        conn.commit()
+        log_action(
+            f"Assigned Student {student_id} to Supervisor {supervisor_id}", session.get('email'))
+
+    except Exception as e:
+        print(f"Assignment Error: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('admin_dashboard'))
+
+
+# =========================
+# ADMIN ANALYTICS
+# ========================
+@app.route('/admin/analytics')
+@admin_required
+def admin_analytics():
+    conn = None
+    status_data = []
+    org_data = []
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Application Status Distribution
+        cursor.execute(
+            "SELECT status, COUNT(*) as count FROM applications GROUP BY status")
+        status_data = cursor.fetchall()
+
+        # 2. Students per Organization (Fixed Column Name)
+        # Check your DB: if it's not company_id, it might be org_id
+        query = """
+            SELECT u.full_name as org_name, COUNT(a.id) as student_count 
+            FROM applications a 
+            JOIN users u ON a.company_id = u.id 
+            WHERE a.status = 'accepted'
+            GROUP BY u.full_name
+        """
+        cursor.execute(query)
+        org_data = cursor.fetchall()
+
+        cursor.close()
+    except Exception as e:
+        print(f"Analytics Error: {e}")
+        # If the error persists, it's likely the column name.
+        # Check if your table uses 'org_id' instead of 'company_id'
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+
+    return render_template('admin_analytics.html',
+                           status_data=status_data,
+                           org_data=org_data)
 
 
 # =========================

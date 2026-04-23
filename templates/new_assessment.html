@@ -7,76 +7,139 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .assessment-container { max-width: 800px; margin: 50px auto; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .score-label { font-weight: bold; color: #1e293b; }
-        .score-input { width: 80px; text-align: center; font-weight: bold; border-radius: 8px; }
+        :root { --primary-dark: #1e293b; --accent-blue: #3b82f6; }
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #334155; }
+        .assessment-container { max-width: 850px; margin: 40px auto; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; }
+        .card-header-custom { background: var(--primary-dark); color: white; padding: 30px; }
+        .score-label { font-weight: 600; font-size: 0.9rem; color: #475569; display: flex; justify-content: space-between; }
+        .score-input { 
+            padding: 12px; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            border-radius: 10px; 
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .score-input:focus { border-color: var(--accent-blue); box-shadow: none; }
+        .total-badge { background: #e2e8f0; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div class="container assessment-container">
-    <div class="mb-4">
-        <a href="{{ url_for('view_assessments') }}" class="text-decoration-none text-muted">
-            <i class="fas fa-arrow-left me-2"></i> Back to Assessments
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('view_assessments') }}" class="btn btn-link text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
         </a>
+        <div class="total-badge text-primary">
+            Total Score: <span id="liveTotal">0</span> / 100
+        </div>
     </div>
 
-    <div class="card p-5">
-        <h2 class="fw-bold mb-2">Technical Assessment</h2>
-        <p class="text-muted mb-4">Evaluate the student based on their performance throughout the attachment period.</p>
+    <div class="card">
+        <div class="card-header-custom">
+            <h2 class="mb-1"><i class="fas fa-file-signature me-2"></i> Technical Assessment</h2>
+            <p class="mb-0 opacity-75">Industrial Attachment Performance Evaluation Form</p>
+        </div>
 
-        <form action="{{ url_for('new_assessment') }}" method="POST">
-            <div class="mb-4">
-                <label class="form-label fw-bold">Select Student</label>
-                <select name="student_id" class="form-select form-select-lg" required>
-                    <option value="" selected disabled>Choose a student...</option>
-                    {% for student in students %}
-                    <option value="{{ student.id }}">{{ student.full_name }} ({{ student.email }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <hr class="my-4">
-
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="score-label d-block mb-2">Attendance & Punctuality (0-25)</label>
-                    <input type="number" name="attendance" class="form-control score-input" min="0" max="25" placeholder="0" required>
+        <div class="card-body p-5">
+            <form action="{{ url_for('new_assessment') }}" method="POST" id="assessmentForm">
+                <div class="mb-5">
+                    <label class="form-label fw-bold text-dark">Assigned Student</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user-graduate"></i></span>
+                        <select name="student_id" class="form-select form-select-lg" required>
+                            <option value="" selected disabled>Select the student to evaluate...</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-text text-info">Only students allocated to you are visible here.</div>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="score-label d-block mb-2">Technical Skill Mastery (0-25)</label>
-                    <input type="number" name="skills" class="form-control score-input" min="0" max="25" placeholder="0" required>
+                <h5 class="fw-bold mb-4 text-secondary text-uppercase small tracking-wider">Scoring Criteria (Max 25 each)</h5>
+                
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="score-label mb-2">
+                            <span>Attendance & Punctuality</span>
+                            <span class="text-muted">/25</span>
+                        </div>
+                        <input type="number" name="attendance" class="form-control score-input calc" min="0" max="25" placeholder="0" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="score-label mb-2">
+                            <span>Technical Skills</span>
+                            <span class="text-muted">/25</span>
+                        </div>
+                        <input type="number" name="skills" class="form-control score-input calc" min="0" max="25" placeholder="0" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="score-label mb-2">
+                            <span>Teamwork & Attitude</span>
+                            <span class="text-muted">/25</span>
+                        </div>
+                        <input type="number" name="attitude" class="form-control score-input calc" min="0" max="25" placeholder="0" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="score-label mb-2">
+                            <span>Quality of Reports</span>
+                            <span class="text-muted">/25</span>
+                        </div>
+                        <input type="number" name="overall" class="form-control score-input calc" min="0" max="25" placeholder="0" required>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="score-label d-block mb-2">Adaptability & Teamwork (0-25)</label>
-                    <input type="number" name="attitude" class="form-control score-input" min="0" max="25" placeholder="0" required>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Supervisor Remarks & Recommendations</label>
+                    <textarea name="comments" class="form-control" rows="4" 
+                              placeholder="Please provide specific feedback on student strengths and weaknesses..." required></textarea>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="score-label d-block mb-2">Communication & Reports (0-25)</label>
-                    <input type="number" name="overall" class="form-control score-input" min="0" max="25" placeholder="0" required>
+                <div class="alert alert-warning border-0 shadow-sm small">
+                    <strong>Note:</strong> Once submitted, this assessment will be sent to the Admin and reflected on the student's final report.
                 </div>
-            </div>
 
-            <div class="mt-4 mb-4">
-                <label class="form-label fw-bold">General Supervisor Remarks</label>
-                <textarea name="comments" class="form-control" rows="4" placeholder="Summarize the student's overall performance and areas for improvement..."></textarea>
-            </div>
-
-            <div class="alert alert-info py-2 small">
-                <i class="fas fa-info-circle me-2"></i> The system will automatically calculate the total grade out of 100.
-            </div>
-
-            <button type="submit" class="btn btn-dark btn-lg w-100 mt-3">
-                <i class="fas fa-save me-2"></i> Submit Final Assessment
-            </button>
-        </form>
+                <button type="submit" class="btn btn-dark btn-lg w-100 py-3 mt-3 shadow">
+                    <i class="fas fa-paper-plane me-2"></i> Submit Final Evaluation
+                </button>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    // Live Calculation Logic
+    const inputs = document.querySelectorAll('.calc');
+    const totalDisplay = document.getElementById('liveTotal');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            let total = 0;
+            inputs.forEach(i => {
+                total += Number(i.value) || 0;
+            });
+            totalDisplay.innerText = total;
+
+            // Visual feedback
+            if(total >= 70) totalDisplay.parentElement.className = "total-badge text-success";
+            else if(total >= 40) totalDisplay.parentElement.className = "total-badge text-warning";
+            else totalDisplay.parentElement.className = "total-badge text-danger";
+        });
+    });
+
+    // Confirmation Logic
+    document.getElementById('assessmentForm').addEventListener('submit', function(e) {
+        if(!confirm("Are you sure you want to submit this assessment? It cannot be edited after submission.")) {
+            e.preventDefault();
+        }
+    });
+</script>
 
 </body>
 </html>

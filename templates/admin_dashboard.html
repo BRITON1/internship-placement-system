@@ -5,6 +5,30 @@
     <title>Admin Dashboard - InternHub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .action-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-weight: bold; font-size: 14px; color: #555; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .btn-primary { background: #1e293b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; width: 100%; font-weight: 600;}
+        .btn-primary:hover { background: #334155; }
+        .admin-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        
+        /* Analytics Module Styling */
+        .analytics-row { margin-top: 25px; margin-bottom: 30px; }
+        .chart-container { 
+            background: #fff; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-container h3 { align-self: flex-start; margin-bottom: 20px; color: #1e293b; font-size: 1.1rem; border-bottom: 2px solid #f1f5f9; width: 100%; padding-bottom: 10px; }
+    </style>
 </head>
 <body>
 
@@ -19,6 +43,7 @@
             <a href="/admin/students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
             <a href="/admin/organizations"><i class="fa-solid fa-building"></i> Organizations</a>
             <a href="/admin/allocations"><i class="fa-solid fa-user-check"></i> Allocations</a>
+            <a href="/admin/analytics"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
             <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
             <a href="/admin/audit-logs"><i class="fa-solid fa-file-shield"></i> Audit Logs</a>
             <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
@@ -44,24 +69,120 @@
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-info"><h4>Total Students</h4><span>0</span></div>
+                    <div class="stat-info"><h4>Total Students</h4><span>{{ students }}</span></div>
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-info"><h4>Organizations</h4><span>0</span></div>
+                    <div class="stat-info"><h4>Organizations</h4><span>{{ organizations }}</span></div>
                     <i class="fa-solid fa-building"></i>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-info"><h4>Placed Students</h4><span>0</span></div>
+                    <div class="stat-info"><h4>Placed Students</h4><span>{{ placed }}</span></div>
                     <i class="fa-solid fa-circle-check"></i>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-info"><h4>Pending Approvals</h4><span>0</span></div>
+                    <div class="stat-info"><h4>Pending Approvals</h4><span>{{ pending }}</span></div>
                     <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+
+            <div class="admin-sections">
+                <div class="action-card">
+                    <h3><i class="fa-solid fa-user-plus"></i> Add New Supervisor</h3>
+                    <hr style="margin: 10px 0; border: 0.5px solid #eee;">
+                    <form action="/admin/add_supervisor" method="POST">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="full_name" placeholder="e.g. Dr. Jane Smith" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" placeholder="supervisor@jooust.ac.ke" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Create Supervisor Account</button>
+                    </form>
+                </div>
+
+                <div class="action-card">
+                    <h3><i class="fa-solid fa-link"></i> Assign Allocation</h3>
+                    <hr style="margin: 10px 0; border: 0.5px solid #eee;">
+                    <form action="/admin/assign_supervisor" method="POST">
+                        <div class="form-group">
+                            <label>Select Student</label>
+                            <select name="student_id" required>
+                                <option value="" disabled selected>Choose a student...</option>
+                                {% for s in students_list %}
+                                <option value="{{ s.id }}">{{ s.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Assign to Supervisor</label>
+                            <select name="supervisor_id" required>
+                                <option value="" disabled selected>Choose a supervisor...</option>
+                                {% for sup in supervisors %}
+                                <option value="{{ sup.id }}">{{ sup.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Link Student & Supervisor</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="analytics-row">
+                <div class="chart-container">
+                    <h3><i class="fa-solid fa-chart-column me-2"></i> Real-Time Placement Analytics</h3>
+                    <canvas id="placementChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const ctx = document.getElementById('placementChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Accepted', 'Rejected'],
+                datasets: [{
+                    label: 'Applications',
+                    data: [
+                        {{ chart_data.pending }}, 
+                        {{ chart_data.accepted }}, 
+                        {{ chart_data.rejected }}
+                    ],
+                    backgroundColor: [
+                        '#f59e0b', // Amber (Pending)
+                        '#10b981', // Emerald (Accepted)
+                        '#ef4444'  // Rose (Rejected)
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right', // Changed to right for a cleaner look next to the doughnut
+                        labels: {
+                            padding: 20,
+                            font: { family: "'Inter', sans-serif", size: 13, weight: '600' },
+                            color: '#475569'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    </script>
 
 </body>
 </html>

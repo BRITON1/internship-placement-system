@@ -1,22 +1,223 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - InternHub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .form-box { background: rgba(0,0,0,0.2); padding: 40px; border-radius: 10px; max-width: 400px; margin: 100px auto; text-align: center; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #4a5568; background: #1a202c; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: #ffffff; overflow: hidden; }
+
+        /* Left Branding Section */
+        .brand-section {
+            flex: 1;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .brand-section img {
+            max-width: 250px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .brand-section p {
+            font-size: 1.1rem;
+            color: #cbd5e1;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        /* Right Form Section */
+        .form-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            font-size: 2rem;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .login-container p.subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        /* Error Alert Styling */
+        .error-alert {
+            background-color: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #1e293b;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .btn-signin {
+            width: 100%;
+            background: #1e293b;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-signin:hover {
+            background: #334155;
+            transform: translateY(-1px);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .register-link a {
+            color: #0ea5e9;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .brand-section { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="form-box">
-        <h2>Sign In</h2>
-        <form method="POST" action="/login">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <br><br>
-            <button type="submit" class="btn btn-green" style="border:none; width: 100%;">Login</button>
-        </form>
+
+    <div class="brand-section">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+        <p>Your centralized platform for internship & industrial attachment placements.</p>
     </div>
+
+    <div class="form-section">
+        <div class="login-container">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to your account to continue.</p>
+
+            {% if error %}
+            <div class="error-alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label>Email</label>
+                    <div class="input-wrapper">
+                        <input type="email" name="email" placeholder="you@gmail.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password" id="password" placeholder="••••••••" required>
+                        <i class="fa-solid fa-eye" onclick="togglePassword()"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-signin">Sign In</button>
+            </form>
+
+            <div class="register-link">
+                Don't have an account? <a href="{{ url_for('register') }}">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const icon = event.target;
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+    </script>
+
 </body>
 </html>

@@ -5,6 +5,27 @@
     <title>Supervisor Dashboard - InternHub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .chart-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        /* Dashboard visual alignment */
+        .main-content { transition: all 0.3s ease; }
+    </style>
 </head>
 <body>
 
@@ -32,11 +53,10 @@
         <div class="dashboard-container">
             <div class="hero-banner" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/images/banner-bg.png'); height: 200px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; padding-left: 40px; color: white; margin-bottom: 30px; background-size: cover;">
                 <h1 style="font-size: 28px;">Supervisor Dashboard</h1>
-                <p style="opacity: 0.9;">Monitor and assess your assigned students.</p>
+                <p style="opacity: 0.9;">Monitor and assess your assigned students at UON.</p>
             </div>
 
             <div class="stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                
                 <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <p style="color: #64748b; font-size: 14px;">Assigned Students</p>
@@ -60,10 +80,58 @@
                     </div>
                     <i class="fa-solid fa-clipboard-check" style="font-size: 30px; color: #10b981; opacity: 0.3;"></i>
                 </div>
+            </div>
 
+            <div class="chart-section">
+                <div class="chart-header">
+                    <i class="fa-solid fa-chart-pie" style="color: #10b981;"></i>
+                    <span>Logbook Review Progress</span>
+                </div>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="logbookStatusChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const ctx = document.getElementById('logbookStatusChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Pending', 'Rejected'],
+                datasets: [{
+                    data: [
+                        {{ logbook_stats.approved }}, 
+                        {{ logbook_stats.pending }}, 
+                        {{ logbook_stats.rejected }}
+                    ],
+                    backgroundColor: [
+                        '#10b981', // Emerald (UON Green-ish)
+                        '#f59e0b', // Amber
+                        '#ef4444'  // Rose
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 30,
+                            font: { size: 14, weight: '500' },
+                            usePointStyle: true
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    </script>
 
 </body>
 </html>

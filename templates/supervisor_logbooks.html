@@ -93,10 +93,16 @@
 
                         <form action="{{ url_for('approve_log', log_id=log.id) }}" method="POST">
                             <div class="row align-items-end">
-                                <div class="col-md-7">
+                                <div class="col-md-5">
                                     <label class="form-label small fw-bold">Supervisor Remarks</label>
-                                    <textarea name="comment" class="form-control form-control-sm" rows="1" placeholder="Provide feedback to the student...">{{ log.supervisor_comment or '' }}</textarea>
+                                    <textarea name="comment" class="form-control form-control-sm" rows="1" placeholder="Provide feedback...">{{ log.supervisor_comment or '' }}</textarea>
                                 </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold">Grade (1-10)</label>
+                                    <input type="number" name="grade" class="form-control form-control-sm" min="1" max="10" value="{{ log.grade or '' }}" placeholder="0">
+                                </div>
+
                                 <div class="col-md-5 d-flex gap-2">
                                     <button name="status" value="approved" class="btn btn-success btn-sm w-100 py-2">
                                         <i class="fas fa-check me-1"></i> Approve
