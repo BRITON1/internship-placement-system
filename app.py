@@ -80,29 +80,38 @@ def log_action(action, user_email):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
+        if session.get('user_id'):
+            dashboards = {
+                'student': 'student_dashboard',
+                'organization': 'organization_dashboard',
+                'supervisor': 'supervisor_dashboard',
+                'admin': 'admin_dashboard'
+            }
+            return redirect(url_for(dashboards.get(session.get('role', ''), 'login')))
         return render_template('login.html')
 
-    email = request.form.get('email')
-    password_candidate = request.form.get('password')
+    email = request.form.get('email', '').strip()
+    password_candidate = request.form.get('password', '')
 
-    # Start connection
-    conn = get_db_connection()
+    if not email or not password_candidate:
+        return render_template('login.html', error="Please enter both email and password.")
+
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # Search by email
         cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
         user = cursor.fetchone()
 
-        # Security Verification
         if user and check_password_hash(user['password'], password_candidate):
-            # 1. Populate all session variables
+            session.clear()
             session['user_id'] = user['id']
             session['full_name'] = user['full_name']
             session['role'] = user['role']
             session['email'] = user['email']
             session.permanent = True
 
-            # 2. Advanced Role-based Redirection
             dashboards = {
                 'student': 'student_dashboard',
                 'organization': 'organization_dashboard',
@@ -111,7 +120,6 @@ def login():
             }
             return redirect(url_for(dashboards.get(user['role'], 'login')))
 
-        # 3. Fail Case: Return to login page with error message
         return render_template('login.html', error="Invalid email or password ❌")
 
     except Exception as e:
@@ -119,9 +127,10 @@ def login():
         return render_template('login.html', error="A system error occurred. Please try again.")
 
     finally:
-        # Crucial for JOOUST server stability: Always close the gate
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 # =========================
 # AUTH (REGISTER + LOGIN)
 # =========================
@@ -582,7 +591,7 @@ def approve_logbook(log_id):
 def view_assessments():
     supervisor_id = session.get('user_id')
 
-    # Check if the person logged in is actually a supervisor
+    # Security Check
     if session.get('role') != 'supervisor':
         return "Access Denied", 403
 
@@ -590,26 +599,33 @@ def view_assessments():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        # Join with users to get student names for the table
+        # 1. Fetch assessments with Student Names
+        # We use 'a.created_at' as 'assessment_date' so your HTML template doesn't break
         query = """
-            SELECT a.*, u.full_name as student_name 
+            SELECT a.*, u.full_name as student_name, a.created_at as assessment_date 
             FROM assessments a
             JOIN users u ON a.student_id = u.id
             WHERE a.supervisor_id = %s
-            ORDER BY a.assessment_date DESC
+            ORDER BY a.created_at DESC
         """
         cursor.execute(query, (supervisor_id,))
         assessments = cursor.fetchall()
 
-        # Get initial for the top-right avatar
+        # 2. Get Supervisor's Name for the avatar initial
         cursor.execute(
             "SELECT full_name FROM users WHERE id = %s", (supervisor_id,))
-        user = cursor.fetchone()
-        initial = user['full_name'][0].upper() if user else "S"
+        user_row = cursor.fetchone()
+
+        # Safe way to get initial
+        full_name = user_row['full_name'] if user_row else "Supervisor"
+        initial = full_name[0].upper()
 
         return render_template('supervisor_assessments.html',
                                assessments=assessments,
                                initial=initial)
+    except Exception as e:
+        print(f"Error fetching assessments: {e}")
+        return f"Database Error: {e}", 500
     finally:
         cursor.close()
         conn.close()
@@ -629,6 +645,7 @@ def new_assessment():
 
     if request.method == 'POST':
         try:
+            # 1. Capture data from the HTML form (Check your <input name="...">)
             student_id = request.form.get('student_id')
             attendance = request.form.get('attendance')
             skills = request.form.get('skills')
@@ -636,27 +653,45 @@ def new_assessment():
             overall = request.form.get('overall')
             comments = request.form.get('comments')
 
+            # 2. SQL Insert
+            # IMPORTANT: Ensure your DB table has these exact column names
             query = """
                 INSERT INTO assessments 
-                (student_id, supervisor_id, attendance_score, skills_score, attitude_score, overall_score, comments)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (student_id, supervisor_id, attendance_score, skills_score, attitude_score, overall_score, comments, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
             """
-            cursor.execute(query, (student_id, supervisor_id,
-                           attendance, skills, attitude, overall, comments))
+
+            cursor.execute(query, (
+                student_id,
+                supervisor_id,
+                attendance,
+                skills,
+                attitude,
+                overall,
+                comments
+            ))
             conn.commit()
 
-            log_action(
-                f"Submitted Assessment for Student ID {student_id}", session.get('email'))
+            # Optional: Log action if you have this function
+            try:
+                log_action(
+                    f"Submitted Assessment for Student ID {student_id}", session.get('email'))
+            except:
+                pass
+
             return redirect(url_for('view_assessments'))
+
         except Exception as e:
             print(f"Error saving assessment: {e}")
-            return "Error saving assessment", 500
+            conn.rollback()
+            return f"Error saving assessment: {e}", 500
         finally:
             cursor.close()
             conn.close()
 
-    # GET Method: Only show students assigned to THIS supervisor
+    # --- GET Method ---
     try:
+        # Fetch only students assigned to this supervisor via the allocations table
         cursor.execute("""
             SELECT u.id, u.full_name 
             FROM allocations a
@@ -664,10 +699,43 @@ def new_assessment():
             WHERE a.supervisor_id = %s
         """, (supervisor_id,))
         assigned_students = cursor.fetchall()
+
         return render_template('new_assessment.html', students=assigned_students)
+    except Exception as e:
+        print(f"Error fetching students: {e}")
+        return "Error loading students", 500
     finally:
-        cursor.close()
-        conn.close()
+        # Only close if they haven't been closed by a previous block
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
+
+@app.route('/supervisor/assessment/view/<int:assessment_id>')
+@login_required
+def view_assessment_detail(assessment_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Fetch the specific assessment details and the student's name
+    query = """
+        SELECT a.*, u.full_name as student_name 
+        FROM assessments a
+        JOIN users u ON a.student_id = u.id
+        WHERE a.id = %s
+    """
+    cursor.execute(query, (assessment_id,))
+    assessment = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not assessment:
+        return "Assessment not found", 404
+
+    return render_template('assessment_detail.html', assessment=assessment)
 
 
 # =========================
@@ -727,6 +795,7 @@ def supervisor_profile():
 
 
 @app.route('/organization/post', methods=['GET', 'POST'])
+@login_required
 def manage_slots():
     user_id = session.get('user_id')
     company = session.get('company_name', 'Organization')
@@ -737,10 +806,26 @@ def manage_slots():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # --- PART 1: HANDLING THE FORM SUBMISSION (POST) ---
+    # --- CHECK VERIFICATION STATUS ---
+    try:
+        cursor.execute(
+            "SELECT is_verified FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user or not user.get('is_verified'):
+            cursor.close()
+            conn.close()
+            return "Your account is pending admin verification. You cannot post yet.", 403
+
+    except Exception as e:
+        print(f"Verification check error: {e}")
+        cursor.close()
+        conn.close()
+        return "Something went wrong. Try again.", 500
+
+    # --- PART 1: HANDLE FORM SUBMISSION ---
     if request.method == 'POST':
         try:
-            # Capture all fields from your HTML form
             title = request.form.get('title')
             description = request.form.get('description')
             category = request.form.get('category')
@@ -749,33 +834,40 @@ def manage_slots():
             duration = request.form.get('duration')
             requirements = request.form.get('requirements')
             start_date = request.form.get('start_date')
-            # Using end_date as deadline for now
             deadline = request.form.get('end_date')
 
             query = """
                 INSERT INTO internships 
-                (user_id, title, description, location, slots, status, created_at) 
-                VALUES (%s, %s, %s, %s, %s, 'open', NOW())
+                (user_id, organization_id, title, description, category, location, 
+                 slots, duration, requirements, start_date, deadline, status, created_at) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'open', NOW())
             """
-            cursor.execute(
-                query, (user_id, title, description, location, slots))
+
+            values = (
+                user_id, user_id, title, description, category, location,
+                slots, duration, requirements, start_date, deadline
+            )
+
+            cursor.execute(query, values)
             conn.commit()
 
-            # Success! Redirect back to the same page to see the updated list
+            print("✅ Internship posted successfully!")
             return redirect(url_for('manage_slots'))
 
         except Exception as e:
             print(f"Error saving internship: {e}")
             conn.rollback()
-        # Note: If you want to save category/duration, ensure those columns exist in your DB table first!
 
-    # --- PART 2: DISPLAYING THE LIST (GET) ---
+    # --- PART 2: FETCH INTERNSHIPS (GET) ---
     try:
-        # Fetching internships posted by this organization
-        # Using user_id is safer than company_name for the query
-        query = "SELECT * FROM internships WHERE user_id = %s ORDER BY created_at DESC"
+        query = """
+            SELECT * FROM internships 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC
+        """
         cursor.execute(query, (user_id,))
         slots = cursor.fetchall()
+
     except Exception as e:
         print(f"SQL Error: {e}")
         slots = []
@@ -785,9 +877,11 @@ def manage_slots():
     cursor.close()
     conn.close()
 
-    # Check if we should show the list or the form
-    # If you want to keep them on separate pages, ensure this points to the right HTML
-    return render_template('manage_slots.html', slots=slots, initial=initial)
+    return render_template(
+        'manage_slots.html',
+        slots=slots,
+        initial=initial
+    )
 
 
 @app.route('/organization/new_slot')
@@ -929,28 +1023,87 @@ def admin_students():
 
     return render_template('admin_students.html', students=students)
 
+# ========================
+# ADMIN VERIFY
+# ========================
 
+
+@app.route('/admin/verify-org/<int:org_id>', methods=['POST'])
+@login_required
+@admin_required
+def verify_organization(org_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    verified = False
+    try:
+        cursor.execute("DESCRIBE users")
+        columns = [row[0] for row in cursor.fetchall()]
+
+        if 'verification_status' in columns:
+            try:
+                cursor.execute(
+                    "UPDATE users SET verification_status = 'Verified' WHERE id = %s", (org_id,))
+                verified = True
+            except mysql.connector.Error as e:
+                print(f"Could not update verification_status: {e}")
+
+        if 'is_verified' in columns:
+            try:
+                cursor.execute(
+                    "UPDATE users SET is_verified = TRUE WHERE id = %s", (org_id,))
+                verified = True
+            except mysql.connector.Error as e:
+                print(f"Could not update is_verified: {e}")
+
+        if verified:
+            conn.commit()
+        else:
+            print(f"No verification column found for organization {org_id}")
+    except Exception as e:
+        print(f"Error verifying organization {org_id}: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('admin_organizations'))
 # ========================
 # ADMIN: ORGANIZATIONS
 # ========================
+
+
 @app.route('/admin/organizations')
+@login_required
 def admin_organizations():
+    if session.get('role') != 'admin':
+        return "Access Denied", 403
+
     conn = get_db_connection()
+    # Keep dictionary=True so we can use org.full_name in HTML
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT id, full_name, email FROM users WHERE role='organization'")
-    organizations = cursor.fetchall()
+    try:
+        # Fetch all users who are organizations
+        # Make sure is_verified is in your SELECT
+        query = "SELECT id, full_name, email, is_verified FROM users WHERE role = 'organization'"
+        cursor.execute(query)
+        organizations = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+        return render_template('admin_organizations.html', organizations=organizations)
 
-    return render_template('admin_organizations.html', organizations=organizations)
-
+    except Exception as e:
+        print(f"Error: {e}")
+        return f"Database Error: {e}", 500
+    finally:
+        cursor.close()
+        conn.close()
 
 # ========================
 # ADMIN: AUDIT LOGS (REAL)
 # ========================
+
+
 @app.route('/admin/audit-logs')
 def admin_audit_logs():
     conn = get_db_connection()
@@ -1387,25 +1540,6 @@ def view_student(student_id):
         return render_template('admin_view_student.html', student=student)
     else:
         return "Student not found in database", 404
-
-# =========================
-# ADMIN VERIFY
-# =========================
-
-
-@app.route('/admin/verify-org/<int:org_id>', methods=['POST'])
-def verify_organization(org_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Update the status to 'Verified'
-    query = "UPDATE users SET verification_status = 'Verified' WHERE id = %s"
-    cursor.execute(query, (org_id,))
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-    return redirect(url_for('admin_organizations'))
 
 # =========================
 # ADMIN ALLOCATIONS
