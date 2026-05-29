@@ -2,97 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Applicants - InternHub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <title>Manage Applicants - InternHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .sidebar-nav a { text-decoration: none; display: flex; align-items: center; gap: 10px; padding: 12px 20px; color: #cbd5e1; transition: 0.3s; }
-        .sidebar-nav a.active { background: #334155; color: white; border-left: 4px solid #3b82f6; }
-        .application-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .applicant-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 15px; }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .bg-pending { background: #fef3c7; color: #92400e; }
+        .bg-accepted { background: #dcfce7; color: #166534; }
+        .bg-rejected { background: #fee2e2; color: #991b1b; }
+        .btn-accept { background-color: #1e293b; color: white; border: none; }
+        .btn-accept:hover { background-color: #334155; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="sidebar-logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
-            <span>Organization</span>
+<div class="container py-5">
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted mb-1 small">Organization</p>
+            <h3 class="fw-bold mb-1">Student Applications</h3>
+            <p class="text-muted mb-0">Review applications, accept qualified interns, and keep your onboarding process smooth.</p>
         </div>
-        
-        <nav class="sidebar-nav">
-            <a href="/organization/dashboard"><i class="fa-solid fa-grid-view"></i> Dashboard</a>
-            <a href="/organization/post"><i class="fa-solid fa-briefcase"></i> Post Slots</a>
-            <a href="/organization/applicants" class="active"><i class="fa-solid fa-file-lines"></i> Applications</a>
-            <a href="/organization/interns"><i class="fa-solid fa-users"></i> Current Interns</a>
-            <a href="/organization/evaluations"><i class="fa-solid fa-star"></i> Evaluations</a>
-            <a href="/organization/profile"><i class="fa-solid fa-building"></i> Company Profile</a>
-        </nav>
-
-        <div class="sign-out">
-            <a href="{{ url_for('logout') }}">
-                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('organization_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+            <a href="{{ url_for('current_interns') }}" class="btn btn-primary">
+                <i class="fas fa-users me-2"></i> Current Interns
             </a>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="top-nav">
-            <div class="user-avatar" style="background: #dcfce7; color: #166534;">{{ initial or 'T' }}</div>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <div class="card rounded-3 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted">Pending</span>
+                    <span class="badge bg-warning text-dark">{{ status_counts.get('pending', 0) }}</span>
+                </div>
+                <h4 class="fw-bold mb-0">Applications waiting review</h4>
+            </div>
         </div>
-
-        <div class="dashboard-container">
-            <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 30px;">Student Applications</h2>
-
-            <div class="applications-list">
-                {% if applications %}
-                    {% for app in applications %}
-                    <div class="application-card">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div>
-                                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">
-                                    Applied for: <span style="font-weight: 700; color: #1e293b; text-transform: uppercase;">{{ app.title }}</span>
-                                </p>
-                                <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">{{ app.full_name }}</h3>
-                                <p style="color: #94a3b8; font-size: 0.85rem; font-style: italic; margin: 5px 0 10px 0;">{{ app.email }}</p>
-                                <p style="color: #94a3b8; font-size: 0.8rem;">Applied: {{ app.date_applied or '09/04/2026' }}</p>
-                            </div>
-
-                            <div style="text-align: right;">
-                                <span class="status-pill" style="background: #f1f5f9; color: #475569; margin-bottom: 15px;">
-                                    {{ app.status|capitalize }}
-                                </span>
-                                
-                                <div style="display: flex; gap: 10px;">
-                                    <form action="/application/update" method="POST">
-                                        <input type="hidden" name="app_id" value="{{ app.id }}">
-                                        <button type="submit" name="status" value="accepted" 
-                                                style="background: #1e293b; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                                            Accept
-                                        </button>
-                                    </form>
-                                    <form action="/application/update" method="POST">
-                                        <input type="hidden" name="app_id" value="{{ app.id }}">
-                                        <button type="submit" name="status" value="rejected" 
-                                                style="background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                                            Reject
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div style="text-align: center; padding: 60px; border: 2px dashed #e2e8f0; border-radius: 12px;">
-                        <i class="fa-solid fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
-                        <p style="color: #64748b;">No pending applications yet.</p>
-                    </div>
-                {% endif %}
+        <div class="col-sm-4">
+            <div class="card rounded-3 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted">Accepted</span>
+                    <span class="badge bg-success">{{ status_counts.get('accepted', 0) }}</span>
+                </div>
+                <h4 class="fw-bold mb-0">Verified interns</h4>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card rounded-3 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted">Rejected</span>
+                    <span class="badge bg-danger">{{ status_counts.get('rejected', 0) }}</span>
+                </div>
+                <h4 class="fw-bold mb-0">Declined applicants</h4>
             </div>
         </div>
     </div>
+
+    {% if applications %}
+        {% for app in applications %}
+        <div class="applicant-card d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center shadow-sm">
+            <div class="flex-grow-1">
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 mb-2">
+                    <h5 class="fw-bold m-0">{{ app.full_name }}</h5>
+                    <span class="status-badge bg-{{ app.status }}">{{ app.status|capitalize }}</span>
+                </div>
+                <p class="text-muted small mb-1">Applied for: <strong>{{ app.internship_title }}</strong></p>
+                <p class="text-muted small mb-0">Submitted on: {{ app.applied_at | default('N/A') }}</p>
+                <p class="text-primary small mb-0">{{ app.email }}</p>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
+                {% if app.status == 'pending' %}
+                    <form action="{{ url_for('update_application_status', app_id=app.id, action='accept') }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-accept px-4">
+                            <i class="fas fa-check me-1"></i> Accept
+                        </button>
+                    </form>
+                    <form action="{{ url_for('update_application_status', app_id=app.id, action='reject') }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-outline-danger px-4">
+                            <i class="fas fa-times me-1"></i> Reject
+                        </button>
+                    </form>
+                {% else %}
+                    <button class="btn btn-sm btn-light border text-muted" disabled>
+                        Decision Made
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5 bg-white rounded-3 border shadow-sm">
+            <i class="fas fa-user-check fa-3x text-primary mb-3"></i>
+            <h5 class="fw-bold">No applications are waiting right now</h5>
+            <p class="text-muted mb-4">Once students apply, their applications will appear here automatically. Manage them from this page or return to your dashboard.</p>
+            <a href="{{ url_for('organization_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    {% endif %}
+</div>
 
 </body>
 </html>

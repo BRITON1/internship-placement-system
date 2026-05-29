@@ -7,7 +7,7 @@
     
     <style>
         /* Base Reset */
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; min-height: 70vh; overflow: auto; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; min-height: 100vh; overflow: auto; }
 
         /* Left Side: Dark Gradient */
         .split-left {
@@ -44,6 +44,25 @@
         h2 { font-size: 28px; color: #0f172a; margin-bottom: 8px; }
         .subtitle { color: #64748b; margin-bottom: 30px; font-size: 14px; }
 
+        /* Flask Flash Messages Container */
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        .flash-warning { background-color: #fffaf0; border: 1px solid #feebc8; color: #dd6b20; }
+        .flash-danger { background-color: #fff5f5; border: 1px solid #fed7d7; color: #e53e3e; }
+        .flash-success { background-color: #f0fff4; border: 1px solid #c6f6d5; color: #38a169; }
+        .flash-info { background-color: #ebf8ff; border: 1px solid #bee3f8; color: #3182ce; }
+
         /* Role Selection (2x2 Grid) */
         .role-grid {
             display: grid;
@@ -61,6 +80,7 @@
             align-items: flex-start;
             gap: 12px;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .role-box i { color: #94a3b8; font-size: 18px; margin-top: 3px; }
@@ -68,9 +88,12 @@
         .role-box p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.3; }
 
         /* Hover & Selected States */
-        .role-box:hover { border-color: #38b2ac; background-color: #f0fff4; }
+        .role-box:not(.disabled-role):hover { border-color: #38b2ac; background-color: #f0fff4; }
         .role-box.selected { border-color: #38b2ac; background-color: #e6fffa; }
         .role-box.selected i { color: #38b2ac; }
+
+        /* Disabled Role Styling */
+        .disabled-role { opacity: 0.6; cursor: not-allowed; background-color: #f8fafc; }
 
         /* Form Inputs */
         .form-group { margin-bottom: 18px; }
@@ -125,7 +148,20 @@
         <h2>Create your account</h2>
         <p class="subtitle">Choose your role and fill in your details.</p>
 
-        <form method="POST" action="/register">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-alert flash-{{ category }}">
+                            <i class="fa-solid {% if category == 'danger' or category == 'warning' %}fa-circle-exclamation{% elif category == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register') }}">
             <input type="hidden" name="role" id="role" value="student">
 
             <div class="role-grid">
@@ -145,38 +181,44 @@
                     </div>
                 </div>
 
-                <div class="role-box" onclick="selectRole('admin', this)">
-                    <i class="fa-solid fa-shield-halved"></i>
+                <div class="role-box disabled-role admin-card" onclick="selectRole('admin', this)">
+                    <i class="fa-solid fa-user-shield"></i>
                     <div>
                         <h4>University Admin</h4>
-                        <p>Manage the placement process</p>
+                        <p>Staff Managed Only</p>
                     </div>
+                    <span class="lock-icon" style="position: absolute; top: 10px; right: 10px;">
+                        <i class="fa-solid fa-lock" style="font-size: 12px; color: #64748b;"></i>
+                    </span>
                 </div>
 
-                <div class="role-box" onclick="selectRole('supervisor', this)">
+                <div class="role-box disabled-role supervisor-card" onclick="selectRole('supervisor', this)">
                     <i class="fa-solid fa-book-open"></i>
                     <div>
                         <h4>Supervisor</h4>
-                        <p>Assess & grade students</p>
+                        <p>Staff Managed Only</p>
                     </div>
+                    <span class="lock-icon" style="position: absolute; top: 10px; right: 10px;">
+                        <i class="fa-solid fa-lock" style="font-size: 12px; color: #64748b;"></i>
+                    </span>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>Full Name</label>
-                <input type="text" name="full_name" placeholder="Briton Chadiku" required>
+                <input type="text" name="full_name" placeholder="Enter your full name" required>
             </div>
 
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" placeholder="britonchadiku@gmail.com" required>
+                <input type="email" name="email" placeholder="yourname@domain.com" required>
             </div>
 
             <div class="form-group">
                 <label>Password</label>
                 <div class="password-wrapper">
                     <input type="password" name="password" id="password" placeholder="••••••••" required>
-                    <i class="fa-regular fa-eye toggle-password" onclick="togglePassword()"></i>
+                    <i class="fa-regular fa-eye toggle-password" id="togglePasswordIcon" onclick="togglePassword()"></i>
                 </div>
             </div>
 
@@ -184,21 +226,37 @@
         </form>
 
         <div class="form-footer">
-            Already have an account? <a href="/login">Sign In</a>
+            Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
         </div>
     </div>
 
     <script>
     function selectRole(role, element) {
+        if (element.classList.contains('disabled-role')) {
+            alert("Staff and Admin registration is restricted. Please contact the Department Chairman.");
+            return;
+        }
+
         document.getElementById("role").value = role;
         let boxes = document.querySelectorAll('.role-box');
         boxes.forEach(box => box.classList.remove('selected'));
         element.classList.add('selected');
     }
 
+    // UPDATED: Dynamically switches class between fa-eye and fa-eye-slash
     function togglePassword() {
-        var p = document.getElementById("password");
-        p.type = (p.type === "password") ? "text" : "password";
+        var passwordField = document.getElementById("password");
+        var icon = document.getElementById("togglePasswordIcon");
+        
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            passwordField.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
     }
     </script>
 </body>

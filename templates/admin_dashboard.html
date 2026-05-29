@@ -46,6 +46,9 @@
             <a href="/admin/analytics"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
             <a href="/admin/reports"><i class="fa-solid fa-chart-line"></i> Reports</a>
             <a href="/admin/audit-logs"><i class="fa-solid fa-file-shield"></i> Audit Logs</a>
+            <a href="/admin/all_evaluations"><i class="fa-solid fa-clipboard-list"></i> All Evaluations</a>
+            <a href="{{ url_for('admin_placements') }}" class="nav-link {% if request.endpoint == 'admin_placements' %}active{% endif %}"><i class="fa-solid fa-user-graduate me-2"></i> Active Placements</a>
+            <a href="{{ url_for('admin_all_applications') }}" class="nav-link"><i class="fas fa-file-signature me-2"></i> View All Applications</a>
             <a href="/admin/settings"><i class="fa-solid fa-gear"></i> Settings</a>
         </nav>
 
@@ -73,7 +76,7 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-info"><h4>Organizations</h4><span>{{ organizations }}</span></div>
+                    <div class="stat-info"><h4>Organizations</h4><span>{{ organization }}</span></div>
                     <i class="fa-solid fa-building"></i>
                 </div>
                 <div class="stat-card">

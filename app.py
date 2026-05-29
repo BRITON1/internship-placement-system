@@ -79,17 +79,35 @@ def log_action(action, user_email):
 # =========================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Maps your clean database enum values to your target dashboard endpoints
+    dashboards = {
+        'student': 'student_dashboard',
+        'supervisor': 'supervisor_dashboard',
+        'admin': 'admin_dashboard',
+        # Maps database 'employer' to your template layout
+        'employer': 'organization_dashboard'
+    }
+
+    # ==========================================
+    # 1. GET REQUEST HANDLER
+    # ==========================================
     if request.method == 'GET':
         if session.get('user_id'):
-            dashboards = {
-                'student': 'student_dashboard',
-                'organization': 'organization_dashboard',
-                'supervisor': 'supervisor_dashboard',
-                'admin': 'admin_dashboard'
-            }
-            return redirect(url_for(dashboards.get(session.get('role', ''), 'login')))
+            # MATCH SCHEMA: Check the integer verification status safely
+            is_verified = session.get('is_verified')
+
+            # Circuit breaker: If an employer session is unverified (0), kick them out to stop loops
+            if is_verified == 0:
+                session.clear()
+                return render_template('login.html', error="Your account status requires admin verification. ⏳")
+
+            user_role = str(session.get('role', '')).strip().lower()
+            return redirect(url_for(dashboards.get(user_role, 'login')))
         return render_template('login.html')
 
+    # ==========================================
+    # 2. POST REQUEST HANDLER (AUTHENTICATION)
+    # ==========================================
     email = request.form.get('email', '').strip()
     password_candidate = request.form.get('password', '')
 
@@ -105,25 +123,39 @@ def login():
         user = cursor.fetchone()
 
         if user and check_password_hash(user['password'], password_candidate):
+            clean_role = str(user.get('role', '')).strip().lower()
+
+            # MATCH SCHEMA: Grab the true tinyint status flag (0 or 1). Default to 0 if missing.
+            db_verified = user.get('is_verified')
+            if db_verified is None:
+                db_verified = 0
+
+            # --- SCHEMA-BASED ACCOUNT GATEKEEPERS ---
+            # If the user is an employer and is_verified is 0, halt them immediately
+            if clean_role == 'employer' and int(db_verified) == 0:
+                return render_template('login.html', error="Your organization account is awaiting review and verification by the university admin. ⏳")
+
+            # Custom handling check if your system uses explicit 'rejected' text in the status column
+            if str(user.get('status', '')).strip().lower() == 'rejected':
+                return render_template('login.html', error="Your account access request has been declined. Contact admin support. ❌")
+
+            # --- VALIDATED SESSION REGISTRATION ---
             session.clear()
             session['user_id'] = user['id']
             session['full_name'] = user['full_name']
-            session['role'] = user['role']
+            session['role'] = clean_role
             session['email'] = user['email']
+            # Keep track of verification state to protect GET calls
+            session['is_verified'] = int(db_verified)
             session.permanent = True
 
-            dashboards = {
-                'student': 'student_dashboard',
-                'organization': 'organization_dashboard',
-                'supervisor': 'supervisor_dashboard',
-                'admin': 'admin_dashboard'
-            }
-            return redirect(url_for(dashboards.get(user['role'], 'login')))
+            # Use normalized role token for cleaner destination parsing
+            return redirect(url_for(dashboards.get(clean_role, 'login')))
 
         return render_template('login.html', error="Invalid email or password ❌")
 
     except Exception as e:
-        print(f"Login System Error: {e}")
+        print(f"Login System Error Log: {e}")
         return render_template('login.html', error="A system error occurred. Please try again.")
 
     finally:
@@ -139,28 +171,55 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        full_name = request.form.get('full_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        incoming_role = request.form.get('role', '').strip().lower()
 
-        # 1. SECURITY: Only allow these roles via public registration
-        if role not in ['student', 'organization']:
+        # 1. FRONTEND TRANSLATION MATRIX: Safely convert form tokens to true DB ENUM values
+        role_map = {
+            'student': 'student',
+            # Translates 'organization' form choice into 'employer' ENUM
+            'organization': 'employer',
+            'employer': 'employer'
+        }
+
+        # Validate that the requested role is explicitly allowed for public signups
+        if incoming_role not in role_map:
             return "Unauthorized role selection. ⛔", 403
 
-        # 2. HASHING: Never store plain text!
+        db_role = role_map[incoming_role]
+
+        if not full_name or not email or not password:
+            return "All registration fields are strictly required. ❌", 400
+
+        # 2. HASHING: Encrypt security credentials securely
         hashed_pw = generate_password_hash(password)
 
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            query = "INSERT INTO users (full_name, email, password, role) VALUES (%s, %s, %s, %s)"
-            cursor.execute(query, (full_name, email, hashed_pw, role))
+            # MATCH SCHEMA: Injects db_role ('employer') and explicitly flags status settings
+            query = """
+                INSERT INTO users (full_name, email, password, role, is_verified, status) 
+                VALUES (%s, %s, %s, %s, 0, 'Active')
+            """
+            cursor.execute(query, (full_name, email, hashed_pw, db_role))
             conn.commit()
-            log_action("User Registered", email)
+
+            # Optional activity logging hook
+            try:
+                log_action("User Registered", email)
+            except NameError:
+                print(f"[LOG] User registered successfully: {email}")
+
             return redirect(url_for('login'))
+
         except Exception as e:
-            return f"An error occurred: {e}"
+            print(f"Database Registration Failure: {e}")
+            if conn:
+                conn.rollback()
+            return f"An error occurred during registration: {e}"
         finally:
             cursor.close()
             conn.close()
@@ -351,35 +410,57 @@ def organization_dashboard():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # 1. Get Open Slots (Total capacity across all posts by this org)
-    cursor.execute(
-        "SELECT SUM(slots) as total FROM internships WHERE organization_id = %s", (user_id,))
-    result = cursor.fetchone()
-    open_slots = result['total'] if result['total'] else 0
+    try:
+        # 1. Fetch Company Profile Details (MATCH SCHEMA: Check is_verified instead of status)
+        cursor.execute(
+            "SELECT full_name, is_verified FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
 
-    # 2. Get Pending Applications (Count students waiting for a response)
-    cursor.execute("""
-        SELECT COUNT(*) as total FROM applications a
-        JOIN internships i ON a.internship_id = i.id
-        WHERE i.organization_id = %s AND a.status = 'pending'
-    """, (user_id,))
-    pending_apps = cursor.fetchone()['total']
+        # --- BULLETPROOF LOOP BREAKER GATEKEEPER ---
+        if user:
+            # If the admin hasn't verified them yet (is_verified == 0), block dashboard access safely
+            if user.get('is_verified') == 0 or user.get('is_verified') is None:
+                cursor.close()
+                conn.close()
+                session.clear()  # Purge stale session data
+                return render_template('login.html', error="Your organization account is currently awaiting review and verification by the university admin. ⏳")
 
-    # 3. Get Active Interns (Count students already accepted)
-    cursor.execute("""
-        SELECT COUNT(*) as total FROM applications a
-        JOIN internships i ON a.internship_id = i.id
-        WHERE i.organization_id = %s AND a.status = 'accepted'
-    """, (user_id,))
-    active_interns = cursor.fetchone()['total']
+        # Generate branding initial safely (fallback to 'E' for Employer)
+        initial = user['full_name'][0].upper(
+        ) if user and user['full_name'] else "E"
 
-    # 4. Get Company Name for Initials
-    cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    initial = user['full_name'][0].upper() if user else "T"
+        # 2. Get Open Slots (Total capacity across all posts by this employer)
+        cursor.execute(
+            "SELECT SUM(slots) as total FROM internships WHERE organization_id = %s", (user_id,))
+        result = cursor.fetchone()
+        open_slots = result['total'] if result['total'] else 0
 
-    cursor.close()
-    conn.close()
+        # 3. Get Pending Applications (Count students waiting for a response)
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM applications a
+            JOIN internships i ON a.internship_id = i.id
+            WHERE i.organization_id = %s AND a.status = 'pending'
+        """, (user_id,))
+        pending_apps = cursor.fetchone()['total']
+
+        # 4. Get Active Interns (Count students already accepted)
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM applications a
+            JOIN internships i ON a.internship_id = i.id
+            WHERE i.organization_id = %s AND a.status = 'accepted'
+        """, (user_id,))
+        active_interns = cursor.fetchone()['total']
+
+    except Exception as e:
+        print(f"--- [CRITICAL ERROR IN EMPLOYER DASHBOARD] ---")
+        print(f"Details: {str(e)}")
+        open_slots = pending_apps = active_interns = 0
+        initial = "E"
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return render_template('organization_dashboard.html',
                            open_slots=open_slots,
@@ -1029,76 +1110,82 @@ def admin_students():
 
 
 @app.route('/admin/verify-org/<int:org_id>', methods=['POST'])
-@login_required
-@admin_required
 def verify_organization(org_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    verified = False
     try:
-        cursor.execute("DESCRIBE users")
-        columns = [row[0] for row in cursor.fetchall()]
+        # THE FIX: Explicitly set is_verified to 1 AND status to 'Active'
+        # This guarantees the login route recognizes them as fully verified!
+        query = """
+            UPDATE users 
+            SET is_verified = 1, status = 'Active' 
+            WHERE id = %s AND role = 'employer'
+        """
+        cursor.execute(query, (org_id,))
+        conn.commit()
+        print(
+            f"--- [SUCCESS] Organization ID {org_id} has been fully verified and activated! ---")
 
-        if 'verification_status' in columns:
-            try:
-                cursor.execute(
-                    "UPDATE users SET verification_status = 'Verified' WHERE id = %s", (org_id,))
-                verified = True
-            except mysql.connector.Error as e:
-                print(f"Could not update verification_status: {e}")
-
-        if 'is_verified' in columns:
-            try:
-                cursor.execute(
-                    "UPDATE users SET is_verified = TRUE WHERE id = %s", (org_id,))
-                verified = True
-            except mysql.connector.Error as e:
-                print(f"Could not update is_verified: {e}")
-
-        if verified:
-            conn.commit()
-        else:
-            print(f"No verification column found for organization {org_id}")
     except Exception as e:
-        print(f"Error verifying organization {org_id}: {e}")
-        conn.rollback()
+        print(f"Verification query execution failure: {e}")
+        if conn:
+            conn.rollback()
     finally:
         cursor.close()
         conn.close()
 
+    # Redirect back to the list layout to see the badge shift live
     return redirect(url_for('admin_organizations'))
-# ========================
 # ADMIN: ORGANIZATIONS
 # ========================
 
 
 @app.route('/admin/organizations')
-@login_required
 def admin_organizations():
+    # Route guard to ensure only admins have access
     if session.get('role') != 'admin':
-        return "Access Denied", 403
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
-    # Keep dictionary=True so we can use org.full_name in HTML
     cursor = conn.cursor(dictionary=True)
 
     try:
-        # Fetch all users who are organizations
-        # Make sure is_verified is in your SELECT
-        query = "SELECT id, full_name, email, is_verified FROM users WHERE role = 'organization'"
+        # Refined to pull exact schema columns matching 'employer' ENUM
+        query = """
+            SELECT 
+                id, 
+                full_name, 
+                email, 
+                role, 
+                is_verified,
+                COALESCE(NULLIF(TRIM(status), ''), 'Active') AS status
+            FROM users 
+            WHERE role = 'employer'
+            ORDER BY full_name ASC
+        """
         cursor.execute(query)
-        organizations = cursor.fetchall()
+        orgs = cursor.fetchall()
 
-        return render_template('admin_organizations.html', organizations=organizations)
+        # Debug helper: Prints to your terminal to track live records cleanly
+        print(f"--- [DEBUG] Admin Organizations Found: {len(orgs)} ---")
+        for o in orgs:
+            print(
+                f"ID: {o['id']} | Name: {o['full_name']} | Verified: {o['is_verified']} | Status: {o['status']}")
 
     except Exception as e:
-        print(f"Error: {e}")
-        return f"Database Error: {e}", 500
+        print(f"Error fetching organizations: {e}")
+        orgs = []
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
+    # Pass the list to your HTML template matching variable name context
+    return render_template('admin_organizations.html', organizations=orgs)
 # ========================
 # ADMIN: AUDIT LOGS (REAL)
 # ========================
@@ -1146,7 +1233,7 @@ def admin_dashboard():
         students_count = cursor.fetchone()['count']
 
         cursor.execute(
-            "SELECT COUNT(*) AS count FROM users WHERE role='organization'")
+            "SELECT COUNT(*) AS count FROM users WHERE role='employer'")
         organizations_count = cursor.fetchone()['count']
 
         cursor.execute(
@@ -1376,7 +1463,7 @@ def student_applications():
             u.full_name AS company_name
         FROM applications a
         JOIN internships i ON a.internship_id = i.id
-        LEFT JOIN users u ON i.user_id = u.id
+        LEFT JOIN users u ON i.organization_id = u.id
         WHERE a.user_id = %s OR a.student_id = %s
         ORDER BY a.created_at DESC
         """
@@ -1515,6 +1602,150 @@ def admin_reports():
                            orgs=total_orgs,
                            slots=total_slots,
                            placements=placements)
+
+
+# ========================
+# ADMIN: VIEW ALL APPLICATIONS
+# ========================
+@app.route('/admin/all_applications')
+@admin_required
+def admin_all_applications():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            a.id,
+            u.full_name AS student_name,
+            u.email AS student_email,
+            i.title AS internship_title,
+            org.full_name AS organization_name,
+            a.status,
+            DATE_FORMAT(a.created_at, '%Y-%m-%d') AS applied_at
+        FROM applications a
+        JOIN users u ON a.user_id = u.id
+        JOIN internships i ON a.internship_id = i.id
+        LEFT JOIN users org ON i.organization_id = org.id
+        ORDER BY a.created_at DESC
+    """
+
+    try:
+        cursor.execute(query)
+        applications = cursor.fetchall()
+    except Exception as e:
+        print(f"--- [CRITICAL SQL ERROR IN ALL APPLICATIONS] ---")
+        print(f"Details: {str(e)}")
+        applications = []
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_all_applications.html', applications=applications)
+
+
+# ========================
+# ADMIN: ACTIVE PLACEMENTS
+# ========================
+@app.route('/admin/placements')
+@admin_required
+def admin_placements():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            p.id AS placement_id,
+            u.full_name AS student_name,
+            u.email AS student_email,
+            i.title AS internship_title,
+            org.full_name AS organization_name,
+            p.status AS placement_status,
+            DATE_FORMAT(p.created_at, '%Y-%m-%d') AS placed_at
+        FROM placements p
+        JOIN users u ON p.student_id = u.id
+        JOIN internships i ON p.internship_id = i.id
+        LEFT JOIN users org ON i.organization_id = org.id
+        ORDER BY p.created_at DESC
+    """
+    try:
+        cursor.execute(query)
+        placements = cursor.fetchall()
+    except Exception as e:
+        print(f"--- [SQL ERROR IN PLACEMENTS MODULE] ---")
+        print(f"Details: {str(e)}")
+        placements = []
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_placements.html', placements=placements)
+
+
+@app.route('/admin/all_evaluations')
+@admin_required
+def admin_all_evaluations():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Grabs evaluation submissions linking students, supervisors, and organizations
+    query = """
+        SELECT 
+            e.id AS evaluation_id,
+            u.full_name AS student_name,
+            sup.full_name AS supervisor_name,
+            org.full_name AS organization_name,
+            e.grade,
+            e.comments,
+            DATE_FORMAT(e.created_at, '%Y-%m-%d') AS evaluated_at
+        FROM evaluations e
+        JOIN placements p ON e.placement_id = p.id
+        JOIN users u ON p.student_id = u.id
+        LEFT JOIN users sup ON p.supervisor_id = sup.id
+        LEFT JOIN internships i ON p.internship_id = i.id
+        LEFT JOIN users org ON i.organization_id = org.id
+        ORDER BY e.created_at DESC
+    """
+
+    try:
+        cursor.execute(query)
+        evaluations = cursor.fetchall()
+    except Exception as e:
+        print(f"--- [SQL ERROR IN EVALUATIONS MODULE] ---")
+        print(f"Details: {str(e)}")
+        evaluations = []
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_evaluations.html', evaluations=evaluations)
+
+# ========================
+# ADMIN: PROCESS APPLICATIONS
+# ========================
+
+
+@app.route('/admin/application/<int:app_id>/<action>', methods=['POST'])
+@admin_required
+def admin_process_application(app_id, action):
+    if action not in ['accept', 'reject']:
+        return redirect(url_for('admin_all_applications'))
+
+    status = 'accepted' if action == 'accept' else 'rejected'
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "UPDATE applications SET status = %s WHERE id = %s", (status, app_id))
+        conn.commit()
+    except Exception as e:
+        print(f"Admin application processing error: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('admin_all_applications'))
 
 
 # ========================

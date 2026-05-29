@@ -131,11 +131,11 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div style="text-align: center; padding: 80px 20px; border: 2px dashed #e2e8f0; border-radius: 12px; background: white;">
-                <i class="fa-solid fa-users-slash" style="font-size: 3.5rem; color: #cbd5e1; margin-bottom: 20px; display: block;"></i>
+            <div class="empty-state" style="text-align: center; padding: 80px 20px; border: 2px dashed #e2e8f0; border-radius: 12px; background: white;">
+                <img src="{{ url_for('static', filename='images/no-interns.svg') }}" alt="No interns" style="max-width: 120px; margin-bottom: 20px; opacity: 0.5;">
                 <h3 style="color: #64748b; margin-bottom: 10px;">No active interns yet</h3>
                 <p style="color: #94a3b8; max-width: 400px; margin: 0 auto 20px;">Once you accept student applications from the "Applications" tab, they will appear here automatically.</p>
-                <a href="/organization/applicants" class="btn-entry">Review Applications</a>
+                <a href="{{ url_for('view_applicants') }}" class="btn-entry" style="display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Review Pending Applications</a>
             </div>
             {% endif %}
         </div>

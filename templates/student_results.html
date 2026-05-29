@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Internship Results - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .eval-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .eval-card h3 {
+            margin: 0;
+            color: #1e293b;
+        }
+        .eval-card p {
+            margin: 0;
+            color: #64748b;
+        }
+        .status-badge {
+            background: #dcfce7;
+            color: #166534;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .score-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .score-card label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .score-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #3b82f6;
+        }
+        .remarks-section {
+            margin-bottom: 20px;
+        }
+        .remarks-section h4 {
+            font-size: 0.9rem;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        .remarks-content {
+            color: #475569;
+            font-style: italic;
+            background: #fdfdfd;
+            padding: 10px;
+            border-left: 4px solid #e2e8f0;
+        }
+        .footer-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .recommendation {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .btn-entry {
+            background: #1e293b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-entry:hover {
+            background: #334155;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+        .empty-state p {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="InternHub Logo">
+            <span>Student</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/student/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/internships"><i class="fa-solid fa-magnifying-glass"></i> Find Internships</a>
+            <a href="/student/applications"><i class="fa-solid fa-file-signature"></i> My Applications</a>
+            <a href="/student/results" class="active"><i class="fa-solid fa-chart-line"></i> My Results</a>
+            <a href="/student/profile"><i class="fa-solid fa-user"></i> Profile</a>
+        </nav>
+        <div class="sign-out">
+            <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-nav">
+            <div class="user-avatar">S</div>
+        </div>
+
+        <div class="dashboard-container">
+            <h2 style="font-weight: 700; color: #1e293b; margin-bottom: 5px;">My Internship Results</h2>
+            <p style="color: #64748b; margin-bottom: 25px;">View your performance feedback and completion status.</p>
+
+            {% if results %}
+                {% for eval in results %}
+                <div class="eval-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h3>{{ eval.title }}</h3>
+                            <p>Organization: <strong>{{ eval.org_name }}</strong></p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="status-badge">Completed</span>
+                            <p style="margin-top: 5px; font-size: 0.8rem; color: #94a3b8;">{{ eval.created_at.strftime('%d %b, %Y') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="score-grid">
+                        <div class="score-card">
+                            <label>Work Ethic</label>
+                            <div class="score-value">{{ eval.ethic_score }}/10</div>
+                        </div>
+                        <div class="score-card">
+                            <label>Technical</label>
+                            <div class="score-value">{{ eval.tech_score }}/10</div>
+                        </div>
+                        <div class="score-card">
+                            <label>Teamwork</label>
+                            <div class="score-value">{{ eval.comm_score }}/10</div>
+                        </div>
+                    </div>
+
+                    <div class="remarks-section">
+                        <h4>Supervisor Remarks:</h4>
+                        <p class="remarks-content">"{{ eval.remarks }}"</p>
+                    </div>
+
+                    <div class="footer-section">
+                        <span class="recommendation">Recommendation: <strong>{{ eval.recommendation | capitalize }}</strong></span>
+                        <button onclick="window.print()" class="btn-entry">
+                            <i class="fa-solid fa-download"></i> Download Report
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <p>You don't have any completed evaluations yet. Keep working hard!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

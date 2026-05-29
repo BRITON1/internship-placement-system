@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Opportunities - InternHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #38b2ac;
+            --bg: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h2 { font-size: 28px; margin: 0; color: var(--primary); }
+        
+        .back-link {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .back-link:hover { opacity: 0.8; }
+
+        /* Internship Grid */
+        .internship-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .internship-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .internship-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .internship-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .company-name {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .description {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #475569;
+            margin: 15px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Buttons */
+        .btn-apply {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-active:hover { background-color: #334155; }
+
+        .btn-disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .placed-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 12px;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-section">
+            <h2>Available Internships 🎓</h2>
+            <a href="/student/dashboard" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="internship-grid">
+            {% if internships %}
+                {% for internship in internships %}
+                    <div class="internship-card">
+                        <div>
+                            <span class="company-name">{{ internship.company_name | upper }}</span>
+                            <h3>{{ internship.title }}</h3>
+                            
+                            <div class="detail-item">
+                                <i class="fa-solid fa-location-dot"></i> {{ internship.location }}
+                            </div>
+                            <div class="detail-item">
+                                <i class="fa-solid fa-money-bill-wave"></i> {{ internship.stipend }}
+                            </div>
+                            <div class="detail-item">
+                                <i class="fa-solid fa-calendar-day"></i> Deadline: {{ internship.deadline }}
+                            </div>
+
+                            <p class="description">{{ internship.description }}</p>
+                        </div>
+
+                        <form action="/apply" method="POST">
+                            <input type="hidden" name="internship_id" value="{{ internship.id }}">
+                            <input type="hidden" name="user_id" value="{{ session.get('user_id', 1) }}">
+
+                            {% if is_placed is defined and is_placed %}
+                                <button type="button" class="btn-apply btn-disabled" disabled>
+                                    <i class="fa-solid fa-lock"></i> Placed Elsewhere
+                                </button>
+                                <p class="placed-note">You have already secured a placement.</p>
+                            {% else %}
+                                <button type="submit" class="btn-apply btn-active">
+                                    Apply Now <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-folder-open" style="font-size: 40px; color: #cbd5e0; margin-bottom: 15px; display: block;"></i>
+                    <p style="color: var(--text-muted);">No internships available at the moment. Check back later!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

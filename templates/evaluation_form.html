@@ -63,7 +63,7 @@
                 <a href="/organization/evaluations" style="color: #64748b; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-xmark"></i> Cancel</a>
             </div>
 
-            <form action="/submit_evaluation" method="POST">
+            <form action="{{ url_for('process_intern_evaluation') }}" method="POST">
                 <input type="hidden" name="app_id" value="{{ app_id }}">
 
                 <div class="form-group">

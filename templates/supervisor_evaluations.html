@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor Evaluations - InternHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <span>Supervisor</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/supervisor/dashboard"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="/supervisor/assigned-students"><i class="fa-solid fa-users"></i> Assigned Students</a>
+            <a href="/supervisor/assigned_evaluations" class="active"><i class="fa-solid fa-user-check"></i> Verify Interns</a>
+            <a href="/supervisor/logbooks"><i class="fa-solid fa-book-open"></i> Logbooks</a>
+            <a href="/supervisor/assessments"><i class="fa-solid fa-clipboard-check"></i> Assessments</a>
+            <a href="/supervisor/profile"><i class="fa-solid fa-user"></i> Profile</a>
+            <hr style="border: 0.5px solid #2d3748; margin: 20px 0;">
+            <a href="/logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
+        </nav>
+    </div>
+
+    <div class="main-content" style="padding: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div>
+                <h2 style="font-weight: 700; color: #166534; margin: 0;">My Assigned Interns</h2>
+                <p style="color: #64748b; margin: 5px 0 0;">Review performance feedback for supervised students.</p>
+            </div>
+            <a href="/supervisor/dashboard" style="text-decoration: none; color: #166534; font-weight: 600; border: 1px solid #166534; padding: 8px 15px; border-radius: 8px;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="eval-container" style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #dcfce7; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            {% if evaluations %}
+            <table class="table-custom" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 2px solid #f0fdf4;">
+                        <th style="padding: 15px; color: #166534; font-size: 0.85rem;">STUDENT NAME</th>
+                        <th style="color: #166534; font-size: 0.85rem;">HOST ORGANIZATION</th>
+                        <th style="color: #166534; font-size: 0.85rem;">PERFORMANCE</th>
+                        <th style="color: #166534; font-size: 0.85rem;">VERIFICATION</th>
+                        <th style="color: #166534; font-size: 0.85rem;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eval in evaluations %}
+                    <tr style="border-bottom: 1px solid #f0fdf4;">
+                        <td style="padding: 15px;"><strong>{{ eval.student_name }}</strong></td>
+                        <td>{{ eval.org_name }}<br><small style="color: #64748b;">{{ eval.title }}</small></td>
+                        <td><span style="color: #166534; font-weight: 600;">{{ eval.recommendation | capitalize }}</span></td>
+                        <td>
+                            <span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;">
+                                 <i class="fa-solid fa-check-double"></i> Organization Submitted
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('shared_evaluation_details', eval_id=eval.eval_id) }}" style="color: #166534; text-decoration: none; font-weight: 700;">
+                                View Details <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 50px;">
+                <i class="fa-solid fa-user-clock" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                <p style="color: #64748b;">No evaluations have been submitted for your students yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

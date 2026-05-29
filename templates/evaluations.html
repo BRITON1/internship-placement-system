@@ -77,13 +77,14 @@
             <p style="color: #64748b; margin-bottom: 25px;">Provide performance feedback for your active interns.</p>
 
             <div class="eval-container">
+                <h3 style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Awaiting Review</h3>
                 {% if interns %}
-                <table class="table-custom">
+                <table class="table-custom" style="margin-bottom: 40px;">
                     <thead>
                         <tr>
                             <th>Intern Name</th>
                             <th>Position</th>
-                            <th>Evaluation Status</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -103,9 +104,44 @@
                     </tbody>
                 </table>
                 {% else %}
-                <div style="text-align: center; padding: 50px;">
-                    <i class="fa-solid fa-clipboard-check" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
-                    <p style="color: #64748b;">No active interns found to evaluate.</p>
+                <p style="color: #94a3b8; font-style: italic; margin-bottom: 40px;">No pending evaluations.</p>
+                {% endif %}
+
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 30px;">
+
+                <h3 style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Completed Evaluations</h3>
+                {% if past_evaluations %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Intern Name</th>
+                            <th>Average Score</th>
+                            <th>Recommendation</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for eval in past_evaluations %}
+                        <tr>
+                            <td><strong>{{ eval.full_name }}</strong><br><small>{{ eval.title }}</small></td>
+                            <td>
+                                <span style="color: #10b981; font-weight: 800;">
+                                    {{ ((eval.ethic_score + eval.tech_score + eval.comm_score) / 3) | round(1) }}/10
+                                </span>
+                            </td>
+                            <td><span class="status-pill-pending" style="background: #dcfce7; color: #166534;">{{ eval.recommendation | capitalize }}</span></td>
+                            <td>
+                                <a href="{{ url_for('shared_evaluation_details', eval_id=eval.eval_id) }}" style="color: #3b82f6; text-decoration: none; font-weight: 600;">
+                                    <i class="fa-solid fa-eye"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 30px;">
+                    <p style="color: #64748b;">No completed evaluations yet.</p>
                 </div>
                 {% endif %}
             </div>
