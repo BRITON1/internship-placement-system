@@ -51,17 +51,18 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-3">
-                    {% if org.is_verified != 1 %}
+                    {% set is_verified = org.verification_status == 'Verified' or org.is_verified %}
+                    {% if not is_verified %}
                         <span class="status-badge badge-pending">
-                            <i class="fas fa-clock me-1"></i> Pending Approval
+                            <i class="fas fa-clock me-1"></i> Pending
                         </span>
                         
-                        <form action="{{ url_for('verify_organization', org_id=org.id) }}" method="POST" class="m-0" onsubmit="return confirm('Verify this organization profile?');">
+                        <form action="{{ url_for('verify_organization', org_id=org.id) }}" method="POST" class="m-0">
                             <button type="submit" class="btn btn-dark btn-sm px-4">Verify</button>
                         </form>
                     {% else %}
                         <span class="status-badge badge-verified">
-                            <i class="fas fa-check-circle me-1"></i> Verified Partner
+                            <i class="fas fa-check-circle me-1"></i> Verified
                         </span>
                         <button class="btn btn-sm btn-light text-muted" disabled>Verified</button>
                     {% endif %}

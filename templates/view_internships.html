@@ -101,11 +101,28 @@
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
+            -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        /* Buttons */
+        .requirements-box {
+            background-color: #f1f5f9;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 15px;
+        }
+
+        /* Buttons and Anchor Links styling */
+        .btn-apply-link {
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
         .btn-apply {
+            box-sizing: border-box;
             width: 100%;
             padding: 12px;
             border-radius: 8px;
@@ -117,6 +134,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            font-size: 14px;
         }
 
         .btn-active {
@@ -137,6 +155,7 @@
             font-size: 11px;
             color: var(--text-muted);
             margin-top: 8px;
+            margin-bottom: 0;
         }
 
         .empty-state {
@@ -145,12 +164,26 @@
             background: white;
             border-radius: 12px;
             grid-column: 1 / -1;
+            border: 1px dashed #cbd5e1;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: 600; font-size: 14px;
+                        {% if category == 'success' %} background-color: #d1fae5; color: #065f46; border: 1px solid #10b981;
+                        {% elif category == 'error' %} background-color: #fee2e2; color: #991b1b; border: 1px solid #ef4444;
+                        {% else %} background-color: #e0f2fe; color: #075985; border: 1px solid #38bdf8; {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         <div class="header-section">
             <h2>Available Internships 🎓</h2>
             <a href="/student/dashboard" class="back-link">
@@ -163,43 +196,55 @@
                 {% for internship in internships %}
                     <div class="internship-card">
                         <div>
-                            <span class="company-name">{{ internship.company_name | upper }}</span>
+                            <span class="company-name">🏢 {{ internship.company_name | upper }}</span>
                             <h3>{{ internship.title }}</h3>
                             
                             <div class="detail-item">
-                                <i class="fa-solid fa-location-dot"></i> {{ internship.location }}
+                                <i class="fa-solid fa-location-dot"></i> <strong>Location:</strong> {{ internship.location or 'Remote / Not Specified' }}
                             </div>
                             <div class="detail-item">
-                                <i class="fa-solid fa-money-bill-wave"></i> {{ internship.stipend }}
+                                <i class="fa-solid fa-clock"></i> <strong>Duration:</strong> {{ internship.duration or 'Not Specified' }}
                             </div>
                             <div class="detail-item">
-                                <i class="fa-solid fa-calendar-day"></i> Deadline: {{ internship.deadline }}
+                                <i class="fa-solid fa-users"></i> <strong>Slots Left:</strong> {{ internship.slots }}
+                            </div>
+                            <div class="detail-item">
+                                <i class="fa-solid fa-calendar-day"></i> <strong>Deadline:</strong> {{ internship.deadline or 'No Deadline' }}
                             </div>
 
                             <p class="description">{{ internship.description }}</p>
+
+                            {% if internship.requirements %}
+                            <div class="requirements-box">
+                                <strong>Requirements:</strong> {{ internship.requirements }}
+                            </div>
+                            {% endif %}
                         </div>
 
-                        <form action="/apply" method="POST">
-                            <input type="hidden" name="internship_id" value="{{ internship.id }}">
-                            <input type="hidden" name="user_id" value="{{ session.get('user_id', 1) }}">
+                        <div class="action-section" style="margin-top: 15px;">
+                            <form action="/apply" method="POST" style="margin: 0; padding: 0; width: 100%;">
+                                <input type="hidden" name="internship_id" value="{{ internship.id }}">
 
-                            {% if is_placed is defined and is_placed %}
-                                <button type="button" class="btn-apply btn-disabled" disabled>
-                                    <i class="fa-solid fa-lock"></i> Placed Elsewhere
-                                </button>
-                                <p class="placed-note">You have already secured a placement.</p>
-                            {% else %}
-                                <button type="submit" class="btn-apply btn-active">
-                                    Apply Now <i class="fa-solid fa-paper-plane"></i>
-                                </button>
-                            {% endif %}
-                        </form>
+                                {% if internship.id in applied_ids %}
+                                    <button type="button" class="btn-apply btn-disabled" disabled style="width: 100%;">
+                                        <i class="fa-solid fa-check"></i> Already Applied
+                                    </button>
+                                    <p class="placed-note" style="text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                                        You have submitted your application successfully.
+                                    </p>
+                                {% else %}
+                                    <button type="submit" class="btn-apply btn-active" style="width: 100%; cursor: pointer;">
+                                        Apply Now <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">
                     <i class="fa-solid fa-folder-open" style="font-size: 40px; color: #cbd5e0; margin-bottom: 15px; display: block;"></i>
-                    <p style="color: var(--text-muted);">No internships available at the moment. Check back later!</p>
+                    <p style="color: var(--text-muted); font-size: 15px;">No internship opportunities are currently open for applications. Check back later! 📂</p>
                 </div>
             {% endif %}
         </div>

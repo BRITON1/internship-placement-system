@@ -53,24 +53,18 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Student Name</th>
+                                <th>Score</th>
+                                <th>Remarks</th>
                                 <th>Date</th>
-                                <th>Total Mark</th>
-                                <th>Status</th>
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for record in assessments %}
                             <tr>
                                 <td><strong>{{ record.student_name }}</strong></td>
-                                <td>{{ record.assessment_date.strftime('%Y-%m-%d') }}</td>
                                 <td><span class="badge bg-primary">{{ record.overall_score }}/100</span></td>
-                                <td><span class="text-success small fw-bold">Submitted</span></td>
-                                <td>
-                                    <a href="{{ url_for('view_assessment_detail', assessment_id=record.id) }}" class="btn btn-sm btn-outline-secondary">
-                                        view details
-                                    </a>
-                                </td>
+                                <td>{{ record.remarks or record.comments or '-' }}</td>
+                                <td>{{ record.assessment_date.strftime('%Y-%m-%d') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -78,7 +72,7 @@
                 </div>
             {% else %}
                 <div class="text-center py-5 bg-white rounded-3 border">
-                    <p class="text-muted">No assessments submitted yet. Click "New Assessment" to grade a student.</p>
+                    <p class="text-muted">No assessments submitted yet.</p>
                 </div>
             {% endif %}
         </div>

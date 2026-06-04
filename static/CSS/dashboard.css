@@ -195,3 +195,130 @@ body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; background-co
     font-size: 12px;
     font-weight: 500;
 }
+
+/* Allocation Page */
+.page-header h2 {
+    margin: 0 0 20px 0;
+    font-size: 28px;
+    color: #0f172a;
+}
+
+.notification-message {
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.notification-message.success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+}
+
+.notification-message.warning {
+    background-color: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffecb5;
+}
+
+.notification-message.error,
+.notification-message.danger {
+    background-color: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+}
+
+.allocation-card h4 {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.allocation-form {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #0f172a;
+    font-size: 14px;
+    outline: none;
+}
+
+.form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.12);
+}
+
+.btn-primary {
+    background-color: #1e293b;
+    color: white;
+    padding: 12px 26px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #15203b;
+}
+
+.allocation-table th,
+.allocation-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.allocation-table thead tr {
+    background: #f8fafc;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.icon-button {
+    color: #ef4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+}
+
+.icon-button:hover {
+    color: #dc2626;
+}
+
+.inline-form {
+    display: inline-block;
+}
+
+.empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 40px 0;
+}

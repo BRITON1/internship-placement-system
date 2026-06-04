@@ -49,10 +49,10 @@
                     <label class="form-label fw-bold text-dark">Assigned Student</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user-graduate"></i></span>
-                        <select name="student_id" class="form-select form-select-lg" required>
-                            <option value="" selected disabled>Select the student to evaluate...</option>
+                        <select name="allocation_id" id="allocation_id" class="form-control form-select form-select-lg" required>
+                            <option value="" selected disabled>Choose a student...</option>
                             {% for student in students %}
-                            <option value="{{ student.id }}">{{ student.full_name }}</option>
+                            <option value="{{ student.allocation_id }}" {% if selected_allocation == student.allocation_id|string %}selected{% endif %}>{{ student.full_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
